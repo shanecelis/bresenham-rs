@@ -133,7 +133,7 @@ impl Bresenham {
             dx: dx,
             dy: dy,
             x1: end.0,
-            diff: dy - dx,
+            diff: 2 * dy - dx,
             octant: octant,
         }
     }
@@ -155,10 +155,10 @@ impl Iterator for Bresenham {
 
         if self.diff >= 0 {
             self.y += 1;
-            self.diff -= self.dx;
+            self.diff -= 2 * self.dx;
         }
 
-        self.diff += self.dy;
+        self.diff += 2 * self.dy;
 
         // loop inc
         self.x += 1;
@@ -178,7 +178,7 @@ mod tests {
         let bi = Bresenham::new((0, 1), (6, 4));
         let res: Vec<_> = bi.collect();
 
-        assert_eq!(res, [(0, 1), (1, 1), (2, 2), (3, 2), (4, 3), (5, 3), (6, 4)])
+        assert_eq!(res, [(0, 1), (1, 2), (2, 2), (3, 3), (4, 3), (5, 4), (6, 4)])
     }
 
     #[test]
@@ -186,7 +186,7 @@ mod tests {
         let bi = Bresenham::new((6, 4), (0, 1));
         let res: Vec<_> = bi.collect();
 
-        assert_eq!(res, [(6, 4), (5, 4), (4, 3), (3, 3), (2, 2), (1, 2), (0, 1)])
+        assert_eq!(res, [(6, 4), (5, 3), (4, 3), (3, 2), (2, 2), (1, 1), (0, 1)])
     }
 
     #[test]

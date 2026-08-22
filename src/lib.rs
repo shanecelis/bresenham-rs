@@ -112,11 +112,24 @@ impl Octant {
             _ => unreachable!(),
         }
     }
+
+    /// Whether an exact error tie should step the minor axis.
+    ///
+    /// Classic Bresenham always steps on ties (`diff >= 0`). That bias is local
+    /// to the octant, so reversing the endpoints (octant `n` vs `n + 4`) picks
+    /// the opposite pixel. Stepping on ties only in octants 0–3 makes both
+    /// directions choose the same world-space points.
+    #[inline]
+    fn step_minor_on_tie(&self) -> bool {
+        self.0 < 4
+    }
 }
 
 impl Bresenham {
-    /// Creates a new iterator.Yields intermediate points between `start`
-    /// and `end`. Does include `start` but not `end`.
+    /// Creates a new iterator. Yields points from `start` through `end`,
+    /// inclusive. The set of points does not depend on direction:
+    /// `Bresenham::new(a, b)` and `Bresenham::new(b, a)` visit the same
+    /// pixels (in reverse order).
     #[inline]
     pub fn new(start: Point, end: Point) -> Bresenham {
         let octant = Octant::from_points(start, end);
@@ -153,7 +166,7 @@ impl Iterator for Bresenham {
 
         let p = (self.x, self.y);
 
-        if self.diff >= 0 {
+        if self.diff > 0 || (self.diff == 0 && !self.octant.step_minor_on_tie()) {
             self.y += 1;
             self.diff -= 2 * self.dx;
         }
@@ -186,7 +199,26 @@ mod tests {
         let bi = Bresenham::new((6, 4), (0, 1));
         let res: Vec<_> = bi.collect();
 
-        assert_eq!(res, [(6, 4), (5, 3), (4, 3), (3, 2), (2, 2), (1, 1), (0, 1)])
+        assert_eq!(res, [(6, 4), (5, 4), (4, 3), (3, 3), (2, 2), (1, 2), (0, 1)])
+    }
+
+    #[test]
+    fn test_direction_symmetric() {
+        for x0 in -8..=8 {
+            for y0 in -8..=8 {
+                for x1 in -8..=8 {
+                    for y1 in -8..=8 {
+                        let fwd: Vec<_> = Bresenham::new((x0, y0), (x1, y1)).collect();
+                        let rev: Vec<_> = Bresenham::new((x1, y1), (x0, y0)).collect();
+                        assert!(
+                            fwd.iter().rev().eq(rev.iter()),
+                            "asymmetric line ({}, {}) -> ({}, {}): {:?} vs {:?}",
+                            x0, y0, x1, y1, fwd, rev
+                        );
+                    }
+                }
+            }
+        }
     }
 
     #[test]

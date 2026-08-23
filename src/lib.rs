@@ -1,11 +1,13 @@
-//! Iterator-based Bresenham's line drawing algorithm
+//! Iterator-based Bresenham rasterizers
 //!
 //! [Bresenham's line drawing algorithm]
-//! (https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm) is fast
-//! algorithm to draw a line between two points. This crate implements the fast
-//! integer variant, using an iterator-based appraoch for flexibility. It
-//! calculates coordinates without knowing anything about drawing methods or
-//! surfaces.
+//! (https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm) is a fast
+//! integer algorithm to draw a line between two points. This crate implements
+//! that line walker plus the other primitives from
+//! [Alois Zingl's notes](https://zingl.github.io/bresenham.html) — 3D lines,
+//! circles, ellipses, quadratic Bézier curves, and anti-aliased variants —
+//! as iterators. It calculates coordinates without knowing anything about
+//! drawing methods or surfaces.
 //!
 //! Example:
 //!
@@ -38,8 +40,24 @@ extern crate std;
 
 use core::iter::Iterator;
 
-/// Convenient typedef for two machines-sized integers
+mod aa;
+mod bezier;
+mod circle;
+mod ellipse;
+mod line3d;
+mod plot;
+
+pub use aa::{AaPixel, BresenhamAA, LineWidth, QuadBezierAA};
+pub use bezier::QuadBezier;
+pub use circle::Circle;
+pub use ellipse::{Ellipse, EllipseRect};
+pub use line3d::Bresenham3d;
+
+/// Convenient typedef for two machine-sized integers
 pub type Point = (isize, isize);
+
+/// Convenient typedef for three machine-sized integers
+pub type Point3 = (isize, isize, isize);
 
 /// Line-drawing iterator
 pub struct Bresenham {
@@ -117,11 +135,11 @@ impl Octant {
     ///
     /// Classic Bresenham always steps on ties (`diff >= 0`). That bias is local
     /// to the octant, so reversing the endpoints (octant `n` vs `n + 4`) picks
-    /// the opposite pixel. Stepping on ties only in octants 0–3 makes both
+    /// the opposite pixel. Stepping on ties only in octants 4–7 makes both
     /// directions choose the same world-space points.
     #[inline]
     fn step_minor_on_tie(&self) -> bool {
-        self.0 < 4
+        self.0 >= 4
     }
 }
 
@@ -166,7 +184,7 @@ impl Iterator for Bresenham {
 
         let p = (self.x, self.y);
 
-        if self.diff > 0 || (self.diff == 0 && !self.octant.step_minor_on_tie()) {
+        if self.diff > 0 || (self.diff == 0 && self.octant.step_minor_on_tie()) {
             self.y += 1;
             self.diff -= 2 * self.dx;
         }
@@ -180,7 +198,6 @@ impl Iterator for Bresenham {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::Bresenham;
@@ -191,7 +208,10 @@ mod tests {
         let bi = Bresenham::new((0, 1), (6, 4));
         let res: Vec<_> = bi.collect();
 
-        assert_eq!(res, [(0, 1), (1, 2), (2, 2), (3, 3), (4, 3), (5, 4), (6, 4)])
+        assert_eq!(
+            res,
+            [(0, 1), (1, 2), (2, 2), (3, 3), (4, 3), (5, 4), (6, 4)]
+        )
     }
 
     #[test]
@@ -199,7 +219,10 @@ mod tests {
         let bi = Bresenham::new((6, 4), (0, 1));
         let res: Vec<_> = bi.collect();
 
-        assert_eq!(res, [(6, 4), (5, 4), (4, 3), (3, 3), (2, 2), (1, 2), (0, 1)])
+        assert_eq!(
+            res,
+            [(6, 4), (5, 4), (4, 3), (3, 3), (2, 2), (1, 2), (0, 1)]
+        )
     }
 
     #[test]
@@ -213,7 +236,12 @@ mod tests {
                         assert!(
                             fwd.iter().rev().eq(rev.iter()),
                             "asymmetric line ({}, {}) -> ({}, {}): {:?} vs {:?}",
-                            x0, y0, x1, y1, fwd, rev
+                            x0,
+                            y0,
+                            x1,
+                            y1,
+                            fwd,
+                            rev
                         );
                     }
                 }
@@ -235,5 +263,293 @@ mod tests {
         let res: Vec<_> = bi.collect();
 
         assert_eq!(res, [(2, 3), (2, 4), (2, 5), (2, 6)]);
+    }
+
+    #[test]
+    fn test_line3d() {
+        let res: Vec<_> = super::Bresenham3d::new((0, 0, 0), (2, 1, 0)).collect();
+        assert_eq!(res, [(0, 0, 0), (1, 0, 0), (2, 1, 0)]);
+
+        let res: Vec<_> = super::Bresenham3d::new((0, 0, 0), (3, 3, 3)).collect();
+        assert_eq!(res, [(0, 0, 0), (1, 1, 1), (2, 2, 2), (3, 3, 3)]);
+
+        let res: Vec<_> = super::Bresenham3d::new((1, 2, 3), (1, 2, 3)).collect();
+        assert_eq!(res, [(1, 2, 3)]);
+    }
+
+    #[test]
+    fn test_circle() {
+        let res: Vec<_> = super::Circle::new((0, 0), 0).collect();
+        assert_eq!(res, [(0, 0)]);
+
+        let res: Vec<_> = super::Circle::new((0, 0), 1).collect();
+        assert_eq!(res, [(1, 0), (0, 1), (-1, 0), (0, -1)]);
+
+        let res: Vec<_> = super::Circle::new((5, 5), 2).collect();
+        assert_eq!(
+            res,
+            [
+                (7, 5),
+                (5, 7),
+                (3, 5),
+                (5, 3),
+                (7, 6),
+                (4, 7),
+                (3, 4),
+                (6, 3),
+                (6, 7),
+                (3, 6),
+                (4, 3),
+                (7, 4)
+            ]
+        );
+
+        let res: Vec<_> = super::Circle::new((0, 0), 4).collect();
+        assert_eq!(
+            res,
+            [
+                (4, 0),
+                (0, 4),
+                (-4, 0),
+                (0, -4),
+                (4, 1),
+                (-1, 4),
+                (-4, -1),
+                (1, -4),
+                (3, 2),
+                (-2, 3),
+                (-3, -2),
+                (2, -3),
+                (2, 3),
+                (-3, 2),
+                (-2, -3),
+                (3, -2),
+                (1, 4),
+                (-4, 1),
+                (-1, -4),
+                (4, -1)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_ellipse() {
+        let res: Vec<_> = super::Ellipse::new((0, 0), 5, 2).collect();
+        assert_eq!(
+            res,
+            [
+                (5, 0),
+                (-5, 0),
+                (-5, 0),
+                (5, 0),
+                (4, 1),
+                (-4, 1),
+                (-4, -1),
+                (4, -1),
+                (3, 2),
+                (-3, 2),
+                (-3, -2),
+                (3, -2),
+                (2, 2),
+                (-2, 2),
+                (-2, -2),
+                (2, -2),
+                (1, 2),
+                (-1, 2),
+                (-1, -2),
+                (1, -2),
+                (0, 2),
+                (0, 2),
+                (0, -2),
+                (0, -2)
+            ]
+        );
+
+        let res: Vec<_> = super::Ellipse::new((0, 0), 1, 4).collect();
+        assert_eq!(
+            res,
+            [
+                (1, 0),
+                (-1, 0),
+                (-1, 0),
+                (1, 0),
+                (1, 1),
+                (-1, 1),
+                (-1, -1),
+                (1, -1),
+                (1, 2),
+                (-1, 2),
+                (-1, -2),
+                (1, -2),
+                (0, 3),
+                (0, 3),
+                (0, -3),
+                (0, -3),
+                (0, 4),
+                (0, -4)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_ellipse_rect() {
+        let res: Vec<_> = super::EllipseRect::new((0, 0), (8, 4)).collect();
+        assert_eq!(
+            res,
+            [
+                (8, 2),
+                (0, 2),
+                (0, 2),
+                (8, 2),
+                (7, 3),
+                (1, 3),
+                (1, 1),
+                (7, 1),
+                (6, 4),
+                (2, 4),
+                (2, 0),
+                (6, 0),
+                (5, 4),
+                (3, 4),
+                (3, 0),
+                (5, 0),
+                (4, 4),
+                (4, 4),
+                (4, 0),
+                (4, 0),
+                (4, 4),
+                (4, 4),
+                (4, 0),
+                (4, 0)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_quad_bezier() {
+        let res: Vec<_> = super::QuadBezier::new((0, 0), (2, 0), (4, 0)).collect();
+        assert_eq!(res, [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)]);
+
+        let res: Vec<_> = super::QuadBezier::new((0, 0), (2, 4), (4, 0)).collect();
+        assert_eq!(res, [(0, 0), (1, 1), (2, 2), (4, 0), (3, 1), (2, 2)]);
+
+        let res: Vec<_> = super::QuadBezier::new((0, 0), (1, 3), (4, 3)).collect();
+        assert_eq!(res, [(0, 0), (0, 1), (1, 2), (2, 3), (3, 3), (4, 3)]);
+    }
+
+    #[test]
+    fn test_line_aa() {
+        let res: Vec<_> = super::BresenhamAA::new((0, 0), (4, 0)).collect();
+        assert_eq!(
+            res,
+            [
+                ((0, 0), 0),
+                ((1, 0), 0),
+                ((2, 0), 0),
+                ((3, 0), 0),
+                ((4, 0), 0)
+            ]
+        );
+
+        let res: Vec<_> = super::BresenhamAA::new((0, 1), (6, 4)).collect();
+        assert_eq!(
+            res,
+            [
+                ((0, 1), 0),
+                ((1, 1), 127),
+                ((1, 2), 127),
+                ((2, 2), 0),
+                ((3, 2), 127),
+                ((3, 3), 127),
+                ((4, 3), 0),
+                ((5, 3), 127),
+                ((5, 4), 127),
+                ((6, 4), 0)
+            ]
+        );
+
+        let res: Vec<_> = super::BresenhamAA::new((0, 0), (3, 3)).collect();
+        assert_eq!(
+            res,
+            [
+                ((0, 0), 0),
+                ((0, 1), 191),
+                ((1, 0), 191),
+                ((1, 1), 0),
+                ((1, 2), 191),
+                ((2, 1), 191),
+                ((2, 2), 0),
+                ((2, 3), 191),
+                ((3, 2), 191),
+                ((3, 3), 0)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_line_width() {
+        let res: Vec<_> = super::LineWidth::new((0, 0), (4, 0), 1.0).collect();
+        assert_eq!(
+            res,
+            [
+                ((0, 0), 0),
+                ((1, 0), 0),
+                ((2, 0), 0),
+                ((3, 0), 0),
+                ((4, 0), 0)
+            ]
+        );
+
+        let res: Vec<_> = super::LineWidth::new((0, 0), (5, 2), 3.0).collect();
+        assert_eq!(
+            res,
+            [
+                ((0, 0), 0),
+                ((0, 1), 0),
+                ((0, 2), 218),
+                ((1, 0), 0),
+                ((1, 1), 0),
+                ((1, 2), 123),
+                ((2, 0), 0),
+                ((3, 0), 29),
+                ((4, 0), 123),
+                ((5, 0), 218),
+                ((2, 1), 0),
+                ((2, 2), 29),
+                ((3, 1), 0),
+                ((3, 2), 0),
+                ((3, 3), 171),
+                ((4, 1), 0),
+                ((4, 2), 0),
+                ((4, 3), 76),
+                ((5, 1), 0),
+                ((5, 2), 0),
+                ((5, 3), 0),
+                ((5, 4), 218)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_quad_bezier_aa() {
+        let res: Vec<_> = super::QuadBezierAA::new((0, 0), (1, 3), (4, 3)).collect();
+        assert_eq!(
+            res,
+            [
+                ((0, 0), 0),
+                ((1, 0), 236),
+                ((0, 1), 102),
+                ((0, 2), 225),
+                ((1, 1), 120),
+                ((1, 2), 37),
+                ((1, 3), 233),
+                ((2, 2), 126),
+                ((2, 3), 103),
+                ((3, 2), 237),
+                ((3, 3), 22),
+                ((3, 3), 0),
+                ((4, 3), 0)
+            ]
+        );
     }
 }

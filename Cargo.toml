@@ -3,6 +3,7 @@ name = "bresenham"
 version = "0.1.1"
 authors = ["Marc Brinkmann <git@marcbrinkmann.de>"]
 license = "MIT"
+edition = "2021"
 description = "A fast, iterator-based integer-only implementation of Bresenham's line algorithm."
 repository = "https://github.com/mbr/bresenham-rs"
 documentation = "https://mbr.github.io/bresenham-rs/bresenham"

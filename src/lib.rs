@@ -426,6 +426,31 @@ mod tests {
     }
 
     #[test]
+    fn test_circle_for_each_matches_iter() {
+        for r in 0..16 {
+            let a: Vec<_> = super::Circle::new((3, -2), r).collect();
+            let mut b = Vec::new();
+            super::Circle::new((3, -2), r).for_each(|p| b.push(p));
+            assert_eq!(a, b, "r={r}");
+        }
+    }
+
+    #[test]
+    fn test_ellipse_rect_for_each_matches_iter() {
+        for &(p0, p1) in &[
+            ((0, 0), (8, 4)),
+            ((0, 0), (0, 0)),
+            ((2, 3), (12, 10)),
+            ((10, 1), (1, 8)),
+        ] {
+            let a: Vec<_> = super::EllipseRect::new(p0, p1).collect();
+            let mut b = Vec::new();
+            super::EllipseRect::new(p0, p1).for_each(|p| b.push(p));
+            assert_eq!(a, b, "{p0:?} {p1:?}");
+        }
+    }
+
+    #[test]
     fn test_quad_bezier() {
         let res: Vec<_> = super::QuadBezier::new((0, 0), (2, 0), (4, 0)).collect();
         assert_eq!(res, [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)]);

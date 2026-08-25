@@ -43,11 +43,44 @@ impl Ellipse {
             done: false,
         }
     }
+
+    /// Horizontal chords of the filled ellipse: `f(x0, x1, y)`.
+    #[inline]
+    pub fn for_each_hline<F: FnMut(isize, isize, isize)>(mut self, mut f: F) {
+        let a2 = (self.a as i64) * (self.a as i64);
+        let b2 = (self.b as i64) * (self.b as i64);
+        loop {
+            let x0 = self.xm + self.x;
+            let x1 = self.xm - self.x;
+            f(x0, x1, self.ym + self.y);
+            if self.y != 0 {
+                f(x0, x1, self.ym - self.y);
+            }
+            let e2 = 2 * self.err;
+            if e2 >= (self.x * 2 + 1) as i64 * b2 {
+                self.x += 1;
+                self.err += (self.x * 2 + 1) as i64 * b2;
+            }
+            if e2 <= (self.y * 2 + 1) as i64 * a2 {
+                self.y += 1;
+                self.err += (self.y * 2 + 1) as i64 * a2;
+            }
+            if self.x > 0 {
+                break;
+            }
+        }
+        while self.y < self.b {
+            self.y += 1;
+            f(self.xm, self.xm, self.ym + self.y);
+            f(self.xm, self.xm, self.ym - self.y);
+        }
+    }
 }
 
 impl Iterator for Ellipse {
     type Item = Point;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         if self.done {
             return None;
@@ -125,9 +158,9 @@ pub struct EllipseRect {
     a: i64,
     b: i64,
     b1: i64,
-    dx: f64,
-    dy: f64,
-    err: f64,
+    dx: i64,
+    dy: i64,
+    err: i64,
     phase: RectPhase,
     done: bool,
 }
@@ -141,9 +174,9 @@ impl EllipseRect {
         let a = (x1 - x0).abs() as i64;
         let b = (y1 - y0).abs() as i64;
         let b1 = b & 1;
-        let dx = 4.0 * (1.0 - a as f64) * (b as f64) * (b as f64);
-        let dy = 4.0 * (b1 + 1) as f64 * (a as f64) * (a as f64);
-        let err = dx + dy + (b1 as f64) * (a as f64) * (a as f64);
+        let dx = 4 * (1 - a) * b * b;
+        let dy = 4 * (b1 + 1) * a * a;
+        let err = dx + dy + b1 * a * a;
 
         if x0 > x1 {
             x0 = x1;
@@ -172,11 +205,94 @@ impl EllipseRect {
             done: false,
         }
     }
+
+    #[inline]
+    fn points4(&self) -> [Point; 4] {
+        [
+            (self.x1, self.y0),
+            (self.x0, self.y0),
+            (self.x0, self.y1),
+            (self.x1, self.y1),
+        ]
+    }
+
+    #[inline]
+    fn tip4(&self) -> [Point; 4] {
+        [
+            (self.x0 - 1, self.y0),
+            (self.x1 + 1, self.y0),
+            (self.x0 - 1, self.y1),
+            (self.x1 + 1, self.y1),
+        ]
+    }
+
+    #[inline]
+    fn advance_main(&mut self) {
+        let e2 = 2 * self.err;
+        if e2 <= self.dy {
+            self.y0 += 1;
+            self.y1 -= 1;
+            self.dy += self.a;
+            self.err += self.dy;
+        }
+        if e2 >= self.dx || 2 * self.err > self.dy {
+            self.x0 += 1;
+            self.x1 -= 1;
+            self.dx += self.b1;
+            self.err += self.dx;
+        }
+        if self.x0 > self.x1 {
+            self.phase = RectPhase::Tip { which: 0 };
+        }
+    }
+
+    /// Call `f` with every outline pixel. Faster than the iterator when inlined.
+    #[inline]
+    pub fn for_each<F: FnMut(Point)>(mut self, mut f: F) {
+        while let RectPhase::Main { .. } = self.phase {
+            let pts = self.points4();
+            f(pts[0]);
+            f(pts[1]);
+            f(pts[2]);
+            f(pts[3]);
+            self.advance_main();
+        }
+        while (self.y0 - self.y1) as i64 <= self.b {
+            let pts = self.tip4();
+            f(pts[0]);
+            f(pts[1]);
+            self.y0 += 1;
+            f(pts[2]);
+            f(pts[3]);
+            self.y1 -= 1;
+        }
+    }
+
+    /// Horizontal chords of the filled ellipse: `f(x0, x1, y)`.
+    ///
+    /// Each step joins the left and right pixels at the current `y0` / `y1`.
+    #[inline]
+    pub fn for_each_hline<F: FnMut(isize, isize, isize)>(mut self, mut f: F) {
+        while let RectPhase::Main { .. } = self.phase {
+            f(self.x0, self.x1, self.y0);
+            if self.y0 != self.y1 {
+                f(self.x0, self.x1, self.y1);
+            }
+            self.advance_main();
+        }
+        while (self.y0 - self.y1) as i64 <= self.b {
+            f(self.x0 - 1, self.x1 + 1, self.y0);
+            self.y0 += 1;
+            f(self.x0 - 1, self.x1 + 1, self.y1);
+            self.y1 -= 1;
+        }
+    }
 }
 
 impl Iterator for EllipseRect {
     type Item = Point;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         if self.done {
             return None;
@@ -184,35 +300,13 @@ impl Iterator for EllipseRect {
 
         match self.phase {
             RectPhase::Main { quad } => {
-                let p = match quad {
-                    0 => (self.x1, self.y0),
-                    1 => (self.x0, self.y0),
-                    2 => (self.x0, self.y1),
-                    3 => (self.x1, self.y1),
-                    _ => unreachable!(),
-                };
+                let p = self.points4()[quad as usize];
 
                 if quad < 3 {
                     self.phase = RectPhase::Main { quad: quad + 1 };
                 } else {
-                    let e2 = 2.0 * self.err;
-                    if e2 <= self.dy {
-                        self.y0 += 1;
-                        self.y1 -= 1;
-                        self.dy += self.a as f64;
-                        self.err += self.dy;
-                    }
-                    if e2 >= self.dx || 2.0 * self.err > self.dy {
-                        self.x0 += 1;
-                        self.x1 -= 1;
-                        self.dx += self.b1 as f64;
-                        self.err += self.dx;
-                    }
-                    if self.x0 <= self.x1 {
-                        self.phase = RectPhase::Main { quad: 0 };
-                    } else {
-                        self.phase = RectPhase::Tip { which: 0 };
-                    }
+                    self.phase = RectPhase::Main { quad: 0 };
+                    self.advance_main();
                 }
 
                 Some(p)
@@ -224,13 +318,7 @@ impl Iterator for EllipseRect {
                     return None;
                 }
 
-                let p = match which {
-                    0 => (self.x0 - 1, self.y0),
-                    1 => (self.x1 + 1, self.y0),
-                    2 => (self.x0 - 1, self.y1),
-                    3 => (self.x1 + 1, self.y1),
-                    _ => unreachable!(),
-                };
+                let p = self.tip4()[which as usize];
 
                 if which < 3 {
                     if which == 1 {

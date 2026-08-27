@@ -20,7 +20,7 @@ circle = []
 ellipse = []
 ## Quadratic Bézier (`QuadBezier`)
 bezier = []
-## Anti-aliased line, thick line, and quadratic Bézier (`BresenhamAA`, `LineWidth`, `QuadBezierAA`)
+## Anti-aliased line, thick line, and quadratic Bézier (`BresenhamAA`, `WideLine`, `QuadBezierAA`)
 aa = []
 
 [package.metadata.docs.rs]

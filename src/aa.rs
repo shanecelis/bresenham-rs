@@ -1,5 +1,5 @@
 //! Anti-aliased primitives from Alois Zingl's `plotLineAA`, `plotQuadBezierSegAA`,
-//! and `plotLineWidth`.
+//! and `plotWideLine`.
 //!
 //! Intensities match Zingl's `setPixelAA`: `0` is fully on the curve, `255` is
 //! fully off.
@@ -158,8 +158,8 @@ enum LwPhase {
     YPerp { e2: isize, x2: isize },
 }
 
-/// Anti-aliased line of a given pixel width (Zingl `plotLineWidth`).
-pub struct LineWidth {
+/// Anti-aliased line of a given pixel width (Zingl `plotWideLine`).
+pub struct WideLine {
     x0: isize,
     y0: isize,
     x1: isize,
@@ -175,7 +175,7 @@ pub struct LineWidth {
     done: bool,
 }
 
-impl LineWidth {
+impl WideLine {
     /// Inclusive anti-aliased line from `start` to `end` with width `wd`.
     pub fn new(start: Point, end: Point, wd: f32) -> Self {
         let (x0, y0) = start;
@@ -190,7 +190,7 @@ impl LineWidth {
             crate::plot::sqrt_f64((dx * dx + dy * dy) as f64)
         };
 
-        LineWidth {
+        WideLine {
             x0,
             y0,
             x1,
@@ -212,7 +212,7 @@ impl LineWidth {
     }
 }
 
-impl Iterator for LineWidth {
+impl Iterator for WideLine {
     type Item = AaPixel;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -491,7 +491,7 @@ impl Iterator for QuadBezierAA {
 
 #[cfg(test)]
 mod tests {
-    use super::{BresenhamAA, LineWidth, QuadBezierAA};
+    use super::{BresenhamAA, WideLine, QuadBezierAA};
     use std::vec::Vec;
 
     #[test]
@@ -544,8 +544,8 @@ mod tests {
     }
 
     #[test]
-    fn test_line_width() {
-        let res: Vec<_> = LineWidth::new((0, 0), (4, 0), 1.0).collect();
+    fn test_wide_line() {
+        let res: Vec<_> = WideLine::new((0, 0), (4, 0), 1.0).collect();
         assert_eq!(
             res,
             [
@@ -557,7 +557,7 @@ mod tests {
             ]
         );
 
-        let res: Vec<_> = LineWidth::new((0, 0), (5, 2), 3.0).collect();
+        let res: Vec<_> = WideLine::new((0, 0), (5, 2), 3.0).collect();
         assert_eq!(
             res,
             [

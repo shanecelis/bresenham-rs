@@ -1,7 +1,6 @@
 //! Iterator-based Bresenham rasterizers
 //!
-//! [Bresenham's line drawing algorithm]
-//! (https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm) is a fast
+//! [Bresenham's line drawing algorithm](https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm) is a fast
 //! integer algorithm to draw a line between two points. By default this crate
 //! ships only that 2D line walker (`line`). Other primitives from
 //! [Alois Zingl's notes](https://zingl.github.io/bresenham.html) are optional
@@ -15,7 +14,7 @@
 //! | `circle`  | `Circle`                                   |
 //! | `ellipse` | `Ellipse`, `EllipseRect`                   |
 //! | `bezier`  | `QuadBezier`                               |
-//! | `aa`      | `BresenhamAA`, `LineWidth`, `QuadBezierAA` |
+//! | `aa`      | `BresenhamAA`, `WideLine`, `QuadBezierAA` |
 //!
 //! Example:
 //!
@@ -66,7 +65,7 @@ mod plot;
 
 #[cfg(feature = "aa")]
 #[cfg_attr(docsrs, doc(cfg(feature = "aa")))]
-pub use aa::{AaPixel, BresenhamAA, LineWidth, QuadBezierAA};
+pub use aa::{AaPixel, BresenhamAA, WideLine, QuadBezierAA};
 #[cfg(feature = "bezier")]
 #[cfg_attr(docsrs, doc(cfg(feature = "bezier")))]
 pub use bezier::QuadBezier;

@@ -8,4 +8,23 @@ description = "A fast, iterator-based integer-only implementation of Bresenham's
 repository = "https://github.com/mbr/bresenham-rs"
 documentation = "https://mbr.github.io/bresenham-rs/bresenham"
 
+[features]
+default = ["line"]
+## 2D Bresenham line (`Bresenham`)
+line = []
+## 3D Bresenham line (`Bresenham3d`)
+line3d = []
+## Midpoint circle (`Circle`)
+circle = []
+## Axis-aligned ellipses (`Ellipse`, `EllipseRect`)
+ellipse = []
+## Quadratic Bézier (`QuadBezier`)
+bezier = []
+## Anti-aliased line, thick line, and quadratic Bézier (`BresenhamAA`, `LineWidth`, `QuadBezierAA`)
+aa = []
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [dependencies]

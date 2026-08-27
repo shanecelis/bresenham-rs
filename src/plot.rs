@@ -1,8 +1,10 @@
 //! Zingl's integer line walker, used as a fallback by the curve iterators.
 
+#[cfg(feature = "bezier")]
 use crate::Point;
 
 /// Inclusive 2D line from Alois Zingl's `plotLine`.
+#[cfg(feature = "bezier")]
 pub(crate) struct PlotLine {
     x0: isize,
     y0: isize,
@@ -16,6 +18,7 @@ pub(crate) struct PlotLine {
     done: bool,
 }
 
+#[cfg(feature = "bezier")]
 impl PlotLine {
     pub(crate) fn new(start: Point, end: Point) -> Self {
         let (x0, y0) = start;
@@ -39,6 +42,7 @@ impl PlotLine {
     }
 }
 
+#[cfg(feature = "bezier")]
 impl Iterator for PlotLine {
     type Item = Point;
 
@@ -73,6 +77,7 @@ impl Iterator for PlotLine {
     }
 }
 
+#[cfg(any(feature = "aa", feature = "bezier"))]
 #[inline]
 pub(crate) fn abs_f64(v: f64) -> f64 {
     if v < 0.0 {
@@ -82,6 +87,7 @@ pub(crate) fn abs_f64(v: f64) -> f64 {
     }
 }
 
+#[cfg(feature = "aa")]
 #[inline]
 pub(crate) fn min_f64(a: f64, b: f64) -> f64 {
     if a < b {
@@ -91,6 +97,7 @@ pub(crate) fn min_f64(a: f64, b: f64) -> f64 {
     }
 }
 
+#[cfg(feature = "aa")]
 #[inline]
 pub(crate) fn max_f64(a: f64, b: f64) -> f64 {
     if a > b {
@@ -101,6 +108,7 @@ pub(crate) fn max_f64(a: f64, b: f64) -> f64 {
 }
 
 /// `no_std` `floor` for values that fit in `i64`.
+#[cfg(feature = "bezier")]
 #[inline]
 pub(crate) fn floor_f64(v: f64) -> f64 {
     let t = v as i64 as f64;
@@ -112,12 +120,14 @@ pub(crate) fn floor_f64(v: f64) -> f64 {
 }
 
 /// C `floor(v + 0.5)` — half-up toward +∞.
+#[cfg(feature = "bezier")]
 #[inline]
 pub(crate) fn iround(v: f64) -> isize {
     floor_f64(v + 0.5) as isize
 }
 
 /// Newton–Raphson square root for `no_std`.
+#[cfg(feature = "aa")]
 #[inline]
 pub(crate) fn sqrt_f64(v: f64) -> f64 {
     if v <= 0.0 {

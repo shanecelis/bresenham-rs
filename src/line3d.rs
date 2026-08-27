@@ -91,3 +91,22 @@ impl Iterator for Bresenham3d {
         Some(p)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Bresenham3d;
+    use std::vec::Vec;
+
+    #[test]
+    fn test_line3d() {
+        let res: Vec<_> = Bresenham3d::new((0, 0, 0), (2, 1, 0)).collect();
+        assert_eq!(res, [(0, 0, 0), (1, 0, 0), (2, 1, 0)]);
+
+        let res: Vec<_> = Bresenham3d::new((0, 0, 0), (3, 3, 3)).collect();
+        assert_eq!(res, [(0, 0, 0), (1, 1, 1), (2, 2, 2), (3, 3, 3)]);
+
+        let res: Vec<_> = Bresenham3d::new((1, 2, 3), (1, 2, 3)).collect();
+        assert_eq!(res, [(1, 2, 3)]);
+    }
+}
+

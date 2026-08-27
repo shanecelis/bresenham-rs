@@ -280,3 +280,22 @@ fn segments(
     n += 1;
     (out, n)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::QuadBezier;
+    use std::vec::Vec;
+
+    #[test]
+    fn test_quad_bezier() {
+        let res: Vec<_> = QuadBezier::new((0, 0), (2, 0), (4, 0)).collect();
+        assert_eq!(res, [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)]);
+
+        let res: Vec<_> = QuadBezier::new((0, 0), (2, 4), (4, 0)).collect();
+        assert_eq!(res, [(0, 0), (1, 1), (2, 2), (4, 0), (3, 1), (2, 2)]);
+
+        let res: Vec<_> = QuadBezier::new((0, 0), (1, 3), (4, 3)).collect();
+        assert_eq!(res, [(0, 0), (0, 1), (1, 2), (2, 3), (3, 3), (4, 3)]);
+    }
+}
+

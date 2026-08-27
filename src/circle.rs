@@ -137,3 +137,75 @@ impl Iterator for Circle {
         Some(p)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Circle;
+    use std::vec::Vec;
+
+    #[test]
+    fn test_circle() {
+        let res: Vec<_> = Circle::new((0, 0), 0).collect();
+        assert_eq!(res, [(0, 0)]);
+
+        let res: Vec<_> = Circle::new((0, 0), 1).collect();
+        assert_eq!(res, [(1, 0), (0, 1), (-1, 0), (0, -1)]);
+
+        let res: Vec<_> = Circle::new((5, 5), 2).collect();
+        assert_eq!(
+            res,
+            [
+                (7, 5),
+                (5, 7),
+                (3, 5),
+                (5, 3),
+                (7, 6),
+                (4, 7),
+                (3, 4),
+                (6, 3),
+                (6, 7),
+                (3, 6),
+                (4, 3),
+                (7, 4)
+            ]
+        );
+
+        let res: Vec<_> = Circle::new((0, 0), 4).collect();
+        assert_eq!(
+            res,
+            [
+                (4, 0),
+                (0, 4),
+                (-4, 0),
+                (0, -4),
+                (4, 1),
+                (-1, 4),
+                (-4, -1),
+                (1, -4),
+                (3, 2),
+                (-2, 3),
+                (-3, -2),
+                (2, -3),
+                (2, 3),
+                (-3, 2),
+                (-2, -3),
+                (3, -2),
+                (1, 4),
+                (-4, 1),
+                (-1, -4),
+                (4, -1)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_circle_for_each_matches_iter() {
+        for r in 0..16 {
+            let a: Vec<_> = Circle::new((3, -2), r).collect();
+            let mut b = Vec::new();
+            Circle::new((3, -2), r).for_each(|p| b.push(p));
+            assert_eq!(a, b, "r={r}");
+        }
+    }
+}
+

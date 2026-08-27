@@ -335,3 +335,118 @@ impl Iterator for EllipseRect {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{Ellipse, EllipseRect};
+    use std::vec::Vec;
+
+    #[test]
+    fn test_ellipse() {
+        let res: Vec<_> = Ellipse::new((0, 0), 5, 2).collect();
+        assert_eq!(
+            res,
+            [
+                (5, 0),
+                (-5, 0),
+                (-5, 0),
+                (5, 0),
+                (4, 1),
+                (-4, 1),
+                (-4, -1),
+                (4, -1),
+                (3, 2),
+                (-3, 2),
+                (-3, -2),
+                (3, -2),
+                (2, 2),
+                (-2, 2),
+                (-2, -2),
+                (2, -2),
+                (1, 2),
+                (-1, 2),
+                (-1, -2),
+                (1, -2),
+                (0, 2),
+                (0, 2),
+                (0, -2),
+                (0, -2)
+            ]
+        );
+
+        let res: Vec<_> = Ellipse::new((0, 0), 1, 4).collect();
+        assert_eq!(
+            res,
+            [
+                (1, 0),
+                (-1, 0),
+                (-1, 0),
+                (1, 0),
+                (1, 1),
+                (-1, 1),
+                (-1, -1),
+                (1, -1),
+                (1, 2),
+                (-1, 2),
+                (-1, -2),
+                (1, -2),
+                (0, 3),
+                (0, 3),
+                (0, -3),
+                (0, -3),
+                (0, 4),
+                (0, -4)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_ellipse_rect() {
+        let res: Vec<_> = EllipseRect::new((0, 0), (8, 4)).collect();
+        assert_eq!(
+            res,
+            [
+                (8, 2),
+                (0, 2),
+                (0, 2),
+                (8, 2),
+                (7, 3),
+                (1, 3),
+                (1, 1),
+                (7, 1),
+                (6, 4),
+                (2, 4),
+                (2, 0),
+                (6, 0),
+                (5, 4),
+                (3, 4),
+                (3, 0),
+                (5, 0),
+                (4, 4),
+                (4, 4),
+                (4, 0),
+                (4, 0),
+                (4, 4),
+                (4, 4),
+                (4, 0),
+                (4, 0)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_ellipse_rect_for_each_matches_iter() {
+        for &(p0, p1) in &[
+            ((0, 0), (8, 4)),
+            ((0, 0), (0, 0)),
+            ((2, 3), (12, 10)),
+            ((10, 1), (1, 8)),
+        ] {
+            let a: Vec<_> = EllipseRect::new(p0, p1).collect();
+            let mut b = Vec::new();
+            EllipseRect::new(p0, p1).for_each(|p| b.push(p));
+            assert_eq!(a, b, "{p0:?} {p1:?}");
+        }
+    }
+}
+

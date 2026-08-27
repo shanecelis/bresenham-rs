@@ -1,32 +1,32 @@
 //! Anti-aliased primitives from Alois Zingl's `plotLineAA`, `plotQuadBezierSegAA`,
-//! and `plotWideLine`.
+//! and `plotLineWidth`.
 //!
-//! Intensities match Zingl's `setPixelAA`: `0` is fully on the curve, `255` is
-//! fully off.
+//! Coverage is inverted from Zingl's `setPixelAA`: `255` is fully on the curve,
+//! `0` is fully off.
 
 use crate::plot::{abs_f64, max_f64, min_f64};
 use crate::Point;
 
-/// A pixel plus Zingl anti-alias intensity (`0` = fully on, `255` = fully off).
+/// A pixel plus coverage (`255` = fully on, `0` = fully off).
 pub type AaPixel = (Point, u8);
 
-fn clamp_u8(v: isize) -> u8 {
-    if v < 0 {
+fn coverage_i(zingl_fade: isize) -> u8 {
+    255 - if zingl_fade < 0 {
         0
-    } else if v > 255 {
+    } else if zingl_fade > 255 {
         255
     } else {
-        v as u8
+        zingl_fade as u8
     }
 }
 
-fn clamp_u8_f64(v: f64) -> u8 {
-    if v <= 0.0 {
+fn coverage_f(zingl_fade: f64) -> u8 {
+    255 - if zingl_fade <= 0.0 {
         0
-    } else if v >= 255.0 {
+    } else if zingl_fade >= 255.0 {
         255
     } else {
-        v as u8
+        zingl_fade as u8
     }
 }
 
@@ -113,7 +113,7 @@ impl Iterator for BresenhamAA {
             return None;
         }
 
-        let fade = clamp_u8(255 * (self.err - self.dx + self.dy).abs() / self.ed);
+        let fade = coverage_i(255 * (self.err - self.dx + self.dy).abs() / self.ed);
         self.push((self.x0, self.y0), fade);
 
         let e2 = self.err;
@@ -126,7 +126,7 @@ impl Iterator for BresenhamAA {
             if e2 + self.dy < self.ed {
                 self.push(
                     (self.x0, self.y0 + self.sy),
-                    clamp_u8(255 * (e2 + self.dy) / self.ed),
+                    coverage_i(255 * (e2 + self.dy) / self.ed),
                 );
             }
             self.err -= self.dy;
@@ -140,7 +140,7 @@ impl Iterator for BresenhamAA {
             if self.dx - e2 < self.ed {
                 self.push(
                     (x2 + self.sx, self.y0),
-                    clamp_u8(255 * (self.dx - e2) / self.ed),
+                    coverage_i(255 * (self.dx - e2) / self.ed),
                 );
             }
             self.err += self.dx;
@@ -208,7 +208,7 @@ impl WideLine {
     }
 
     fn color(&self, dist: f64) -> u8 {
-        clamp_u8_f64(255.0 * (abs_f64(dist) / self.ed - self.wd + 1.0))
+        coverage_f(255.0 * (abs_f64(dist) / self.ed - self.wd + 1.0))
     }
 }
 
@@ -423,7 +423,7 @@ impl QuadBezierAA {
         let mut ed = max_f64(self.dx + self.xy as f64, -self.xy as f64 - self.dy);
         ed += 2.0 * ed * cur * cur / (4.0 * ed * ed + cur * cur);
         let fade =
-            clamp_u8_f64(255.0 * abs_f64(self.err - self.dx - self.dy - self.xy as f64) / ed);
+            coverage_f(255.0 * abs_f64(self.err - self.dx - self.dy - self.xy as f64) / ed);
         self.push((self.x0, self.y0), fade);
 
         if self.x0 == self.x2 || self.y0 == self.y2 {
@@ -439,7 +439,7 @@ impl QuadBezierAA {
             if self.err - self.dy < ed {
                 self.push(
                     (self.x0, self.y0 + self.sy),
-                    clamp_u8_f64(255.0 * abs_f64(self.err - self.dy) / ed),
+                    coverage_f(255.0 * abs_f64(self.err - self.dy) / ed),
                 );
             }
             self.x0 += self.sx;
@@ -451,7 +451,7 @@ impl QuadBezierAA {
             if cur < ed {
                 self.push(
                     (x1 + self.sx, self.y0),
-                    clamp_u8_f64(255.0 * abs_f64(cur) / ed),
+                    coverage_f(255.0 * abs_f64(cur) / ed),
                 );
             }
             self.y0 += self.sy;
@@ -500,11 +500,11 @@ mod tests {
         assert_eq!(
             res,
             [
-                ((0, 0), 0),
-                ((1, 0), 0),
-                ((2, 0), 0),
-                ((3, 0), 0),
-                ((4, 0), 0)
+                ((0, 0), 255),
+                ((1, 0), 255),
+                ((2, 0), 255),
+                ((3, 0), 255),
+                ((4, 0), 255)
             ]
         );
 
@@ -512,16 +512,16 @@ mod tests {
         assert_eq!(
             res,
             [
-                ((0, 1), 0),
-                ((1, 1), 127),
-                ((1, 2), 127),
-                ((2, 2), 0),
-                ((3, 2), 127),
-                ((3, 3), 127),
-                ((4, 3), 0),
-                ((5, 3), 127),
-                ((5, 4), 127),
-                ((6, 4), 0)
+                ((0, 1), 255),
+                ((1, 1), 128),
+                ((1, 2), 128),
+                ((2, 2), 255),
+                ((3, 2), 128),
+                ((3, 3), 128),
+                ((4, 3), 255),
+                ((5, 3), 128),
+                ((5, 4), 128),
+                ((6, 4), 255)
             ]
         );
 
@@ -529,16 +529,16 @@ mod tests {
         assert_eq!(
             res,
             [
-                ((0, 0), 0),
-                ((0, 1), 191),
-                ((1, 0), 191),
-                ((1, 1), 0),
-                ((1, 2), 191),
-                ((2, 1), 191),
-                ((2, 2), 0),
-                ((2, 3), 191),
-                ((3, 2), 191),
-                ((3, 3), 0)
+                ((0, 0), 255),
+                ((0, 1), 64),
+                ((1, 0), 64),
+                ((1, 1), 255),
+                ((1, 2), 64),
+                ((2, 1), 64),
+                ((2, 2), 255),
+                ((2, 3), 64),
+                ((3, 2), 64),
+                ((3, 3), 255)
             ]
         );
     }
@@ -549,11 +549,11 @@ mod tests {
         assert_eq!(
             res,
             [
-                ((0, 0), 0),
-                ((1, 0), 0),
-                ((2, 0), 0),
-                ((3, 0), 0),
-                ((4, 0), 0)
+                ((0, 0), 255),
+                ((1, 0), 255),
+                ((2, 0), 255),
+                ((3, 0), 255),
+                ((4, 0), 255)
             ]
         );
 
@@ -561,28 +561,28 @@ mod tests {
         assert_eq!(
             res,
             [
-                ((0, 0), 0),
-                ((0, 1), 0),
-                ((0, 2), 218),
-                ((1, 0), 0),
-                ((1, 1), 0),
-                ((1, 2), 123),
-                ((2, 0), 0),
-                ((3, 0), 29),
-                ((4, 0), 123),
-                ((5, 0), 218),
-                ((2, 1), 0),
-                ((2, 2), 29),
-                ((3, 1), 0),
-                ((3, 2), 0),
-                ((3, 3), 171),
-                ((4, 1), 0),
-                ((4, 2), 0),
-                ((4, 3), 76),
-                ((5, 1), 0),
-                ((5, 2), 0),
-                ((5, 3), 0),
-                ((5, 4), 218)
+                ((0, 0), 255),
+                ((0, 1), 255),
+                ((0, 2), 37),
+                ((1, 0), 255),
+                ((1, 1), 255),
+                ((1, 2), 132),
+                ((2, 0), 255),
+                ((3, 0), 226),
+                ((4, 0), 132),
+                ((5, 0), 37),
+                ((2, 1), 255),
+                ((2, 2), 226),
+                ((3, 1), 255),
+                ((3, 2), 255),
+                ((3, 3), 84),
+                ((4, 1), 255),
+                ((4, 2), 255),
+                ((4, 3), 179),
+                ((5, 1), 255),
+                ((5, 2), 255),
+                ((5, 3), 255),
+                ((5, 4), 37)
             ]
         );
     }
@@ -593,19 +593,19 @@ mod tests {
         assert_eq!(
             res,
             [
-                ((0, 0), 0),
-                ((1, 0), 236),
-                ((0, 1), 102),
-                ((0, 2), 225),
-                ((1, 1), 120),
-                ((1, 2), 37),
-                ((1, 3), 233),
-                ((2, 2), 126),
-                ((2, 3), 103),
-                ((3, 2), 237),
-                ((3, 3), 22),
-                ((3, 3), 0),
-                ((4, 3), 0)
+                ((0, 0), 255),
+                ((1, 0), 19),
+                ((0, 1), 153),
+                ((0, 2), 30),
+                ((1, 1), 135),
+                ((1, 2), 218),
+                ((1, 3), 22),
+                ((2, 2), 129),
+                ((2, 3), 152),
+                ((3, 2), 18),
+                ((3, 3), 233),
+                ((3, 3), 255),
+                ((4, 3), 255)
             ]
         );
     }

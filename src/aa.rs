@@ -4,7 +4,6 @@
 //! Coverage is inverted from Zingl's `setPixelAA`: `255` is fully on the curve,
 //! `0` is fully off.
 
-use crate::plot::{abs_f64, max_f64, min_f64};
 use crate::Point;
 
 /// A pixel plus coverage (`255` = fully on, `0` = fully off).
@@ -60,7 +59,7 @@ impl BresenhamAA {
         let ed = if dx + dy == 0 {
             1
         } else {
-            crate::plot::sqrt_f64((dx * dx + dy * dy) as f64) as isize
+            libm::sqrt((dx * dx + dy * dy) as f64) as isize
         };
         let ed = if ed == 0 { 1 } else { ed };
 
@@ -188,7 +187,7 @@ impl WideLine {
         let ed = if dx + dy == 0 {
             1.0
         } else {
-            crate::plot::sqrt_f64((dx * dx + dy * dy) as f64)
+            libm::sqrt((dx * dx + dy * dy) as f64)
         };
 
         WideLine {
@@ -209,7 +208,7 @@ impl WideLine {
     }
 
     fn color(&self, dist: f64) -> u8 {
-        coverage_f(255.0 * (abs_f64(dist) / self.ed - self.wd + 1.0))
+        coverage_f(255.0 * (dist.abs() / self.ed - self.wd + 1.0))
     }
 }
 
@@ -420,11 +419,11 @@ impl QuadBezierAA {
     }
 
     fn step_curve(&mut self) {
-        let cur = min_f64(self.dx + self.xy as f64, -self.xy as f64 - self.dy);
-        let mut ed = max_f64(self.dx + self.xy as f64, -self.xy as f64 - self.dy);
+        let cur = (self.dx + self.xy as f64).min(-self.xy as f64 - self.dy);
+        let mut ed = (self.dx + self.xy as f64).max(-self.xy as f64 - self.dy);
         ed += 2.0 * ed * cur * cur / (4.0 * ed * ed + cur * cur);
         let fade =
-            coverage_f(255.0 * abs_f64(self.err - self.dx - self.dy - self.xy as f64) / ed);
+            coverage_f(255.0 * (self.err - self.dx - self.dy - self.xy as f64).abs() / ed);
         self.push((self.x0, self.y0), fade);
 
         if self.x0 == self.x2 || self.y0 == self.y2 {
@@ -440,7 +439,7 @@ impl QuadBezierAA {
             if self.err - self.dy < ed {
                 self.push(
                     (self.x0, self.y0 + self.sy),
-                    coverage_f(255.0 * abs_f64(self.err - self.dy) / ed),
+                    coverage_f(255.0 * (self.err - self.dy).abs() / ed),
                 );
             }
             self.x0 += self.sx;
@@ -452,7 +451,7 @@ impl QuadBezierAA {
             if cur < ed {
                 self.push(
                     (x1 + self.sx, self.y0),
-                    coverage_f(255.0 * abs_f64(cur) / ed),
+                    coverage_f(255.0 * cur.abs() / ed),
                 );
             }
             self.y0 += self.sy;

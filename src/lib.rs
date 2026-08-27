@@ -65,8 +65,6 @@ mod ellipse;
 mod line;
 #[cfg(feature = "line3d")]
 mod line3d;
-#[cfg(any(feature = "aa", feature = "bezier"))]
-mod plot;
 
 #[cfg(feature = "aa")]
 #[cfg_attr(docsrs, doc(cfg(feature = "aa")))]

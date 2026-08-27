@@ -1,7 +1,6 @@
 //! Quadratic Bézier curves from Alois Zingl's `plotQuadBezier`.
 
 use crate::line::Bresenham;
-use crate::plot::iround;
 use crate::Point;
 
 enum SegState {
@@ -225,6 +224,11 @@ impl Iterator for QuadBezier {
     }
 }
 
+/// C `floor(v + 0.5)` — half-up toward +∞.
+fn iround(v: f64) -> isize {
+    libm::floor(v + 0.5) as isize
+}
+
 fn segments(
     mut x0: isize,
     mut y0: isize,
@@ -242,7 +246,7 @@ fn segments(
 
     if (x as i64) * ((x2 - x1) as i64) > 0 {
         if (y as i64) * ((y2 - y1) as i64) > 0 {
-            if crate::plot::abs_f64((y0 - 2 * y1 + y2) as f64 / t * x as f64) > y.abs() as f64 {
+            if ((y0 - 2 * y1 + y2) as f64 / t * x as f64).abs() > y.abs() as f64 {
                 x0 = x2;
                 x2 = x + x1;
                 y0 = y2;

@@ -7,14 +7,19 @@
 //! Cargo features. It calculates coordinates without knowing anything about
 //! drawing methods or surfaces.
 //!
-//! | Feature   | Types                                      |
-//! |-----------|--------------------------------------------|
-//! | `line`    | `Bresenham` (default)                      |
-//! | `line3d`  | `Bresenham3d`                              |
-//! | `circle`  | `Circle`                                   |
-//! | `ellipse` | `Ellipse`, `EllipseRect`                   |
-//! | `bezier`  | `QuadBezier`                               |
-//! | `aa`      | `BresenhamAA`, `WideLine`, `QuadBezierAA` |
+//! | Feature   | Types                                      | Interval              |
+//! |-----------|--------------------------------------------|-----------------------|
+//! | `line`    | `Bresenham` (default)                      | half-open [start,end) |
+//! | `line3d`  | `Bresenham3d`                              | half-open [start,end) |
+//! | `circle`  | `Circle`                                   | closed outline        |
+//! | `ellipse` | `Ellipse`, `EllipseRect`                   | closed outline        |
+//! | `bezier`  | `QuadBezier`                               | inclusive [start, end]|
+//! | `aa`      | `BresenhamAA`, `WideLine`, `QuadBezierAA`  | inclusive [start, end]|
+//!
+//! Integer lines (`Bresenham`, `Bresenham3d`) are half-open: `start` is
+//! included, `end` is not. Anti-aliased lines and quadratic Béziers include
+//! both endpoints. Circles and ellipses are closed outlines. The reason for the
+//! bounds in being half-open or inclusive is for performance.
 //!
 //! Example:
 //!

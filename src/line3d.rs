@@ -2,7 +2,7 @@
 
 use crate::Point3;
 
-/// Inclusive 3D line-drawing iterator.
+/// 3D line-drawing iterator. Half-open: yields `start..end`.
 pub struct Bresenham3d {
     x: isize,
     y: isize,
@@ -18,11 +18,11 @@ pub struct Bresenham3d {
     z_err: isize,
     dm: isize,
     remaining: isize,
-    done: bool,
 }
 
 impl Bresenham3d {
-    /// Yields every voxel from `start` through `end`, inclusive.
+    /// Yields every voxel from `start` toward `end`, excluding `end`
+    /// (`start..end`).
     #[inline]
     pub fn new(start: Point3, end: Point3) -> Self {
         let (x0, y0, z0) = start;
@@ -50,7 +50,6 @@ impl Bresenham3d {
             z_err: dm / 2,
             dm,
             remaining: dm,
-            done: false,
         }
     }
 }
@@ -60,17 +59,12 @@ impl Iterator for Bresenham3d {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        if self.done {
+        if self.remaining == 0 {
             return None;
         }
+        self.remaining -= 1;
 
         let p = (self.x, self.y, self.z);
-
-        if self.remaining == 0 {
-            self.done = true;
-            return Some(p);
-        }
-        self.remaining -= 1;
 
         self.x_err -= self.dx;
         if self.x_err < 0 {
@@ -100,13 +94,13 @@ mod tests {
     #[test]
     fn test_line3d() {
         let res: Vec<_> = Bresenham3d::new((0, 0, 0), (2, 1, 0)).collect();
-        assert_eq!(res, [(0, 0, 0), (1, 0, 0), (2, 1, 0)]);
+        assert_eq!(res, [(0, 0, 0), (1, 0, 0)]);
 
         let res: Vec<_> = Bresenham3d::new((0, 0, 0), (3, 3, 3)).collect();
-        assert_eq!(res, [(0, 0, 0), (1, 1, 1), (2, 2, 2), (3, 3, 3)]);
+        assert_eq!(res, [(0, 0, 0), (1, 1, 1), (2, 2, 2)]);
 
         let res: Vec<_> = Bresenham3d::new((1, 2, 3), (1, 2, 3)).collect();
-        assert_eq!(res, [(1, 2, 3)]);
+        assert_eq!(res, []);
     }
 }
 

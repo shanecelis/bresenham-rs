@@ -2,7 +2,7 @@
 
 use crate::Point;
 
-/// Line-drawing iterator
+/// Line-drawing iterator. Half-open: yields `start..end`.
 pub struct Bresenham {
     x: isize,
     y: isize,
@@ -87,10 +87,10 @@ impl Octant {
 }
 
 impl Bresenham {
-    /// Creates a new iterator. Yields points from `start` through `end`,
-    /// inclusive. The set of points does not depend on direction:
-    /// `Bresenham::new(a, b)` and `Bresenham::new(b, a)` visit the same
-    /// pixels (in reverse order).
+    /// Creates a new iterator. Yields points from `start` toward `end`,
+    /// excluding `end` (`start..end`). The set of points does not depend on
+    /// direction: `Bresenham::new(a, b)` and `Bresenham::new(b, a)` visit the
+    /// same interior pixels (in reverse order).
     #[inline]
     pub fn new(start: Point, end: Point) -> Bresenham {
         let octant = Octant::from_points(start, end);
@@ -121,7 +121,7 @@ impl Iterator for Bresenham {
         // "The endpoints of the [bresenham] line are the pixels at (x0, y0) and
         // (x1, y1) where the first coordinate of the pair is the column and the
         // second is the row."
-        if self.x > self.x1 {
+        if self.x >= self.x1 {
             return None;
         }
 
@@ -153,7 +153,7 @@ mod tests {
 
         assert_eq!(
             res,
-            [(0, 1), (1, 2), (2, 2), (3, 3), (4, 3), (5, 4), (6, 4)]
+            [(0, 1), (1, 1), (2, 2), (3, 2), (4, 3), (5, 3)]
         )
     }
 
@@ -164,7 +164,7 @@ mod tests {
 
         assert_eq!(
             res,
-            [(6, 4), (5, 4), (4, 3), (3, 3), (2, 2), (1, 2), (0, 1)]
+            [(6, 4), (5, 3), (4, 3), (3, 2), (2, 2), (1, 1)]
         )
     }
 
@@ -176,8 +176,14 @@ mod tests {
                     for y1 in -8..=8 {
                         let fwd: Vec<_> = Bresenham::new((x0, y0), (x1, y1)).collect();
                         let rev: Vec<_> = Bresenham::new((x1, y1), (x0, y0)).collect();
+                        let mut fwd_inc = fwd.clone();
+                        let mut rev_inc = rev.clone();
+                        if (x0, y0) != (x1, y1) {
+                            fwd_inc.push((x1, y1));
+                            rev_inc.push((x0, y0));
+                        }
                         assert!(
-                            fwd.iter().rev().eq(rev.iter()),
+                            fwd_inc.iter().rev().eq(rev_inc.iter()),
                             "asymmetric line ({}, {}) -> ({}, {}): {:?} vs {:?}",
                             x0,
                             y0,
@@ -197,7 +203,7 @@ mod tests {
         let bi = Bresenham::new((2, 3), (5, 3));
         let res: Vec<_> = bi.collect();
 
-        assert_eq!(res, [(2, 3), (3, 3), (4, 3), (5, 3)]);
+        assert_eq!(res, [(2, 3), (3, 3), (4, 3)]);
     }
 
     #[test]
@@ -205,7 +211,13 @@ mod tests {
         let bi = Bresenham::new((2, 3), (2, 6));
         let res: Vec<_> = bi.collect();
 
-        assert_eq!(res, [(2, 3), (2, 4), (2, 5), (2, 6)]);
+        assert_eq!(res, [(2, 3), (2, 4), (2, 5)]);
+    }
+
+    #[test]
+    fn test_degenerate() {
+        let res: Vec<_> = Bresenham::new((3, 3), (3, 3)).collect();
+        assert_eq!(res, []);
     }
 }
 

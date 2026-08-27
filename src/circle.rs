@@ -2,7 +2,7 @@
 
 use crate::Point;
 
-/// Iterator over the pixels of an axis-aligned circle.
+/// Iterator over the pixels of an axis-aligned circle. Closed outline.
 pub struct Circle {
     xm: isize,
     ym: isize,
@@ -14,7 +14,7 @@ pub struct Circle {
 }
 
 impl Circle {
-    /// Circle centered at `center` with the given `radius`.
+    /// Closed circle centered at `center` with the given `radius`.
     ///
     /// A radius of `0` yields the center point once. Negative radii are treated
     /// as their absolute value.

@@ -8,6 +8,7 @@ enum EllipsePhase {
 }
 
 /// Iterator over the pixels of an axis-aligned ellipse given a center and radii.
+/// Closed outline.
 pub struct Ellipse {
     xm: isize,
     ym: isize,
@@ -21,8 +22,8 @@ pub struct Ellipse {
 }
 
 impl Ellipse {
-    /// Ellipse centered at `center` with horizontal radius `a` and vertical
-    /// radius `b`. Negative radii are treated as their absolute value.
+    /// Closed ellipse centered at `center` with horizontal radius `a` and
+    /// vertical radius `b`. Negative radii are treated as their absolute value.
     #[inline]
     pub fn new(center: Point, a: isize, b: isize) -> Self {
         let a = a.abs();
@@ -149,7 +150,7 @@ enum RectPhase {
     Tip { which: u8 },
 }
 
-/// Iterator over an axis-aligned ellipse inscribed in a rectangle.
+/// Iterator over an axis-aligned ellipse inscribed in a rectangle. Closed outline.
 pub struct EllipseRect {
     x0: isize,
     y0: isize,
@@ -166,7 +167,7 @@ pub struct EllipseRect {
 }
 
 impl EllipseRect {
-    /// Ellipse filling the rectangle with opposite corners `p0` and `p1`.
+    /// Closed ellipse filling the rectangle with opposite corners `p0` and `p1`.
     #[inline]
     pub fn new(p0: Point, p1: Point) -> Self {
         let (mut x0, mut y0) = p0;

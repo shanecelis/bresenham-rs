@@ -3,7 +3,7 @@
 #[cfg(feature = "bezier")]
 use crate::Point;
 
-/// Inclusive 2D line from Alois Zingl's `plotLine`.
+/// Inclusive 2D line from Alois Zingl's `plotLine` (`start..=end`).
 #[cfg(feature = "bezier")]
 pub(crate) struct PlotLine {
     x0: isize,

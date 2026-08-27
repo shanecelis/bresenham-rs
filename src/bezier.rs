@@ -1,11 +1,12 @@
 //! Quadratic Bézier curves from Alois Zingl's `plotQuadBezier`.
 
-use crate::plot::{iround, PlotLine};
+use crate::line::Bresenham;
+use crate::plot::iround;
 use crate::Point;
 
 enum SegState {
     Curve,
-    Line(PlotLine),
+    Line(Bresenham),
     Done,
 }
 
@@ -104,7 +105,7 @@ impl QuadBezierSeg {
             dx: 0.0,
             dy: 0.0,
             err: 0.0,
-            state: SegState::Line(PlotLine::new((x0, y0), (x2, y2))),
+            state: SegState::Line(Bresenham::new((x0, y0), (x2, y2))),
         }
     }
 }
@@ -115,10 +116,14 @@ impl Iterator for QuadBezierSeg {
     fn next(&mut self) -> Option<Self::Item> {
         match self.state {
             SegState::Done => None,
-            SegState::Line(ref mut line) => line.next().or_else(|| {
-                self.state = SegState::Done;
-                None
-            }),
+            SegState::Line(ref mut line) => match line.next() {
+                Some(p) => Some(p),
+                None => {
+                    let end = (self.x2, self.y2);
+                    self.state = SegState::Done;
+                    Some(end)
+                }
+            },
             SegState::Curve => {
                 let p = (self.x0, self.y0);
                 if self.x0 == self.x2 && self.y0 == self.y2 {
@@ -142,7 +147,7 @@ impl Iterator for QuadBezierSeg {
 
                 if !(self.dy < 0.0 && self.dx > 0.0) {
                     self.state =
-                        SegState::Line(PlotLine::new((self.x0, self.y0), (self.x2, self.y2)));
+                        SegState::Line(Bresenham::new((self.x0, self.y0), (self.x2, self.y2)));
                 }
 
                 Some(p)

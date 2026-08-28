@@ -19,6 +19,8 @@ line3d = []
 circle = []
 ## Axis-aligned ellipses (`Ellipse`, `EllipseRect`)
 ellipse = []
+## Filled scanlines (`fill::HLine`, `fill::Fillable`)
+fill = []
 ## Quadratic Bézier (`QuadBezier`); implies `line`
 bezier = ["line", "dep:libm"]
 ## Anti-aliased line, thick line, and quadratic Bézier (`LineAA`, `WideLine`, `QuadBezierAA`)

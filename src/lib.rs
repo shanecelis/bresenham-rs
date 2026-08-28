@@ -13,6 +13,9 @@ mod bezier;
 mod circle;
 #[cfg(feature = "ellipse")]
 mod ellipse;
+#[cfg(feature = "fill")]
+#[cfg_attr(docsrs, doc(cfg(feature = "fill")))]
+pub mod fill;
 #[cfg(feature = "line")]
 mod line;
 #[cfg(feature = "line3d")]

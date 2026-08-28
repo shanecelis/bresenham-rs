@@ -13,13 +13,16 @@ methods or surfaces.
 | `line3d`  | `Line3d`                                   | half-open `[start, end)` |
 | `circle`  | `Circle`                                   | closed outline           |
 | `ellipse` | `Ellipse`, `EllipseRect`                   | closed outline           |
+| `fill`    | `fill::HLine`, `fill::Fillable`            | inclusive `[x0, x1]`     |
 | `bezier`  | `QuadBezier`                               | inclusive `[start, end]` |
 | `aa`      | `LineAA`, `WideLine`, `QuadBezierAA`       | inclusive `[start, end]` |
 
 Integer lines are half-open: `start` is included, `end` is not. Anti-aliased
 lines and quadratic Béziers include both endpoints. Circles and ellipses are
-closed outlines. Half-open vs inclusive is a performance choice, not a
-convenience wrapper.
+closed outlines. Enable `fill` with `circle` and/or `ellipse` for
+`Fillable::fill`, which yields one inclusive `[x0, x1]` `HLine` per distinct
+row.
+Half-open vs inclusive is a performance choice, not a convenience wrapper.
 
 `Bresenham`, `Bresenham3d`, and `BresenhamAA` are type aliases for `Line`,
 `Line3d`, and `LineAA`.

@@ -145,8 +145,7 @@ impl Iterator for QuadBezierSeg {
                 }
 
                 if !(self.dy < 0.0 && self.dx > 0.0) {
-                    self.state =
-                        SegState::Line(Line::new((self.x0, self.y0), (self.x2, self.y2)));
+                    self.state = SegState::Line(Line::new((self.x0, self.y0), (self.x2, self.y2)));
                 }
 
                 Some(p)
@@ -307,4 +306,3 @@ mod tests {
         assert_eq!(res, [(0, 0), (0, 1), (1, 2), (2, 3), (3, 3), (4, 3)]);
     }
 }
-

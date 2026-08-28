@@ -422,13 +422,11 @@ impl QuadBezierAA {
         let cur = (self.dx + self.xy as f64).min(-self.xy as f64 - self.dy);
         let mut ed = (self.dx + self.xy as f64).max(-self.xy as f64 - self.dy);
         ed += 2.0 * ed * cur * cur / (4.0 * ed * ed + cur * cur);
-        let fade =
-            coverage_f(255.0 * (self.err - self.dx - self.dy - self.xy as f64).abs() / ed);
+        let fade = coverage_f(255.0 * (self.err - self.dx - self.dy - self.xy as f64).abs() / ed);
         self.push((self.x0, self.y0), fade);
 
         if self.x0 == self.x2 || self.y0 == self.y2 {
-            self.state =
-                BezierAaState::Line(LineAA::new((self.x0, self.y0), (self.x2, self.y2)));
+            self.state = BezierAaState::Line(LineAA::new((self.x0, self.y0), (self.x2, self.y2)));
             return;
         }
 
@@ -449,10 +447,7 @@ impl QuadBezierAA {
         }
         if step_y {
             if cur < ed {
-                self.push(
-                    (x1 + self.sx, self.y0),
-                    coverage_f(255.0 * cur.abs() / ed),
-                );
+                self.push((x1 + self.sx, self.y0), coverage_f(255.0 * cur.abs() / ed));
             }
             self.y0 += self.sy;
             self.dy -= self.xy as f64;
@@ -461,8 +456,7 @@ impl QuadBezierAA {
         }
 
         if !(self.dy < self.dx) {
-            self.state =
-                BezierAaState::Line(LineAA::new((self.x0, self.y0), (self.x2, self.y2)));
+            self.state = BezierAaState::Line(LineAA::new((self.x0, self.y0), (self.x2, self.y2)));
         }
     }
 }
@@ -491,7 +485,7 @@ impl Iterator for QuadBezierAA {
 
 #[cfg(test)]
 mod tests {
-    use super::{LineAA, WideLine, QuadBezierAA};
+    use super::{LineAA, QuadBezierAA, WideLine};
     use std::vec::Vec;
 
     #[test]
@@ -610,4 +604,3 @@ mod tests {
         );
     }
 }
-

@@ -1,5 +1,7 @@
 //! Midpoint circle from Alois Zingl's `plotCircle`.
 
+#[cfg(feature = "fill")]
+use crate::fill::{Fillable, HLine};
 use crate::Point;
 
 /// Iterator over the pixels of an axis-aligned circle. Closed outline.
@@ -87,25 +89,155 @@ impl Circle {
             self.advance();
         }
     }
+}
 
-    /// Horizontal chords of the filled circle: `f(x0, x1, y)`.
-    ///
-    /// Each step mirrors the current point across the y-axis and draws that
-    /// span at `+y` and `-y`.
+#[cfg(feature = "fill")]
+#[cfg_attr(docsrs, doc(cfg(feature = "fill")))]
+impl Fillable for Circle {
     #[inline]
-    pub fn for_each_hline<F: FnMut(isize, isize, isize)>(mut self, mut f: F) {
-        if self.quad == 4 {
-            f(self.xm, self.xm, self.ym);
-            return;
+    fn fill(self) -> impl Iterator<Item = HLine> {
+        CircleFill {
+            c: self,
+            pending: [HLine { x0: 0, x1: 0, y: 0 }; 4],
+            pending_len: 0,
+            pending_i: 0,
+            last_y: None,
+            last_x: None,
+            open_py: None,
+            open_my: None,
+            open_px: None,
+            open_mx: None,
+            finished: false,
         }
-        while !self.done {
-            let x0 = self.xm + self.x;
-            let x1 = self.xm - self.x;
-            f(x0, x1, self.ym + self.y);
-            if self.y != 0 {
-                f(x0, x1, self.ym - self.y);
+    }
+}
+
+/// Iterator over [`HLine`] chords of a filled [`Circle`]. Inclusive `[x0, x1]`.
+#[cfg(feature = "fill")]
+pub(crate) struct CircleFill {
+    c: Circle,
+    pending: [HLine; 4],
+    pending_len: u8,
+    pending_i: u8,
+    last_y: Option<isize>,
+    last_x: Option<isize>,
+    open_py: Option<HLine>,
+    open_my: Option<HLine>,
+    open_px: Option<HLine>,
+    open_mx: Option<HLine>,
+    finished: bool,
+}
+
+#[cfg(feature = "fill")]
+fn widen(open: &mut Option<HLine>, x0: isize, x1: isize, y: isize) {
+    *open = Some(match *open {
+        None => HLine { x0, x1, y },
+        Some(h) => HLine {
+            x0: h.x0.min(x0),
+            x1: h.x1.max(x1),
+            y,
+        },
+    });
+}
+
+#[cfg(feature = "fill")]
+impl CircleFill {
+    fn push(&mut self, h: HLine) {
+        self.pending[self.pending_len as usize] = h;
+        self.pending_len += 1;
+    }
+
+    fn take_open(&mut self, open: &mut Option<HLine>) {
+        if let Some(h) = open.take() {
+            self.push(h);
+        }
+    }
+
+    fn absorb(&mut self) {
+        let xm = self.c.xm;
+        let ym = self.c.ym;
+        let x = self.c.x;
+        let y = self.c.y;
+        if y <= x.abs() {
+            let x0 = xm + x;
+            let x1 = xm - x;
+            widen(&mut self.open_py, x0, x1, ym + y);
+            if y != 0 {
+                widen(&mut self.open_my, x0, x1, ym - y);
             }
-            self.advance();
+        }
+        if x.abs() > y {
+            let x0 = xm - y;
+            let x1 = xm + y;
+            widen(&mut self.open_px, x0, x1, ym + x);
+            if x != 0 {
+                widen(&mut self.open_mx, x0, x1, ym - x);
+            }
+        }
+    }
+}
+
+#[cfg(feature = "fill")]
+impl Iterator for CircleFill {
+    type Item = HLine;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            if (self.pending_i as usize) < self.pending_len as usize {
+                let h = self.pending[self.pending_i as usize];
+                self.pending_i += 1;
+                return Some(h);
+            }
+            self.pending_len = 0;
+            self.pending_i = 0;
+
+            if self.c.quad == 4 {
+                if self.c.done {
+                    return None;
+                }
+                self.c.done = true;
+                return Some(HLine {
+                    x0: self.c.xm,
+                    x1: self.c.xm,
+                    y: self.c.ym,
+                });
+            }
+
+            if self.finished {
+                return None;
+            }
+
+            if self.c.done {
+                let mut py = self.open_py.take();
+                let mut my = self.open_my.take();
+                let mut px = self.open_px.take();
+                let mut mx = self.open_mx.take();
+                self.take_open(&mut py);
+                self.take_open(&mut my);
+                self.take_open(&mut px);
+                self.take_open(&mut mx);
+                self.finished = true;
+                continue;
+            }
+
+            if self.last_y.is_some() && self.last_y != Some(self.c.y) {
+                let mut py = self.open_py.take();
+                let mut my = self.open_my.take();
+                self.take_open(&mut py);
+                self.take_open(&mut my);
+            }
+            if self.last_x.is_some() && self.last_x != Some(self.c.x) {
+                let mut px = self.open_px.take();
+                let mut mx = self.open_mx.take();
+                self.take_open(&mut px);
+                self.take_open(&mut mx);
+            }
+
+            self.absorb();
+            self.last_y = Some(self.c.y);
+            self.last_x = Some(self.c.x);
+            self.c.advance();
         }
     }
 }
@@ -141,6 +273,8 @@ impl Iterator for Circle {
 #[cfg(test)]
 mod tests {
     use super::Circle;
+    #[cfg(feature = "fill")]
+    use crate::Point;
     use std::vec::Vec;
 
     #[test]
@@ -207,5 +341,46 @@ mod tests {
             assert_eq!(a, b, "r={r}");
         }
     }
-}
 
+    #[cfg(feature = "fill")]
+    fn expand(hlines: &[crate::fill::HLine]) -> Vec<Point> {
+        let mut v = Vec::new();
+        for h in hlines {
+            for x in h.x0..=h.x1 {
+                v.push((x, h.y));
+            }
+        }
+        v
+    }
+
+    #[cfg(feature = "fill")]
+    #[test]
+    fn test_circle_fill() {
+        use crate::fill::{Fillable, HLine};
+
+        let res: Vec<_> = Circle::new((0, 0), 0).fill().collect();
+        assert_eq!(res, [HLine { x0: 0, x1: 0, y: 0 }]);
+
+        for r in 0..16 {
+            let hlines: Vec<_> = Circle::new((3, -2), r).fill().collect();
+
+            for h in &hlines {
+                assert!(h.x0 <= h.x1, "r={r} {h:?}");
+            }
+
+            let mut ys: Vec<_> = hlines.iter().map(|h| h.y).collect();
+            let n = ys.len();
+            ys.sort();
+            ys.dedup();
+            assert_eq!(ys.len(), n, "duplicate y r={r} {hlines:?}");
+
+            let filled = expand(&hlines);
+            for p in Circle::new((3, -2), r) {
+                assert!(
+                    filled.contains(&p),
+                    "outline {p:?} not in fill r={r} {hlines:?}"
+                );
+            }
+        }
+    }
+}

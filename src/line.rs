@@ -154,10 +154,7 @@ mod tests {
         let bi = Line::new((0, 1), (6, 4));
         let res: Vec<_> = bi.collect();
 
-        assert_eq!(
-            res,
-            [(0, 1), (1, 1), (2, 2), (3, 2), (4, 3), (5, 3)]
-        )
+        assert_eq!(res, [(0, 1), (1, 1), (2, 2), (3, 2), (4, 3), (5, 3)])
     }
 
     #[test]
@@ -165,10 +162,7 @@ mod tests {
         let bi = Line::new((6, 4), (0, 1));
         let res: Vec<_> = bi.collect();
 
-        assert_eq!(
-            res,
-            [(6, 4), (5, 3), (4, 3), (3, 2), (2, 2), (1, 1)]
-        )
+        assert_eq!(res, [(6, 4), (5, 3), (4, 3), (3, 2), (2, 2), (1, 1)])
     }
 
     #[test]
@@ -223,4 +217,3 @@ mod tests {
         assert_eq!(res, []);
     }
 }
-

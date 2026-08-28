@@ -1,52 +1,4 @@
-//! Iterator-based Bresenham rasterizers
-//!
-//! [Bresenham's line drawing algorithm](https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm) is a fast
-//! integer algorithm to draw a line between two points. By default this crate
-//! ships only that 2D line walker (`line`). Other primitives from
-//! [Alois Zingl's notes](https://zingl.github.io/bresenham.html) are optional
-//! Cargo features. It calculates coordinates without knowing anything about
-//! drawing methods or surfaces.
-//!
-//! | Feature   | Types                                      | Interval              |
-//! |-----------|--------------------------------------------|-----------------------|
-//! | `line`    | `Bresenham` (default)                      | half-open [start,end) |
-//! | `line3d`  | `Bresenham3d`                              | half-open [start,end) |
-//! | `circle`  | `Circle`                                   | closed outline        |
-//! | `ellipse` | `Ellipse`, `EllipseRect`                   | closed outline        |
-//! | `bezier`  | `QuadBezier`                               | inclusive [start, end]|
-//! | `aa`      | `BresenhamAA`, `WideLine`, `QuadBezierAA`  | inclusive [start, end]|
-//!
-//! Integer lines (`Bresenham`, `Bresenham3d`) are half-open: `start` is
-//! included, `end` is not. Anti-aliased lines and quadratic Béziers include
-//! both endpoints. Circles and ellipses are closed outlines. The reason for the
-//! bounds in being half-open or inclusive is for performance.
-//!
-//! Example:
-//!
-//! ```rust
-//! # #[cfg(feature = "line")] {
-//! extern crate bresenham;
-//! use bresenham::Bresenham;
-//!
-//! fn main() {
-//!     for (x, y) in Bresenham::new((0, 1), (6, 4)) {
-//!         println!("{}, {}", x, y);
-//!     }
-//! }
-//! # }
-//! ```
-//!
-//! Will print:
-//!
-//! ```text
-//! (0, 1)
-//! (1, 1)
-//! (2, 2)
-//! (3, 2)
-//! (4, 3)
-//! (5, 3)
-//! ```
-
+#![doc = include_str!("../README.md")]
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
@@ -68,7 +20,7 @@ mod line3d;
 
 #[cfg(feature = "aa")]
 #[cfg_attr(docsrs, doc(cfg(feature = "aa")))]
-pub use aa::{AaPixel, BresenhamAA, WideLine, QuadBezierAA};
+pub use aa::{AaPixel, LineAA, QuadBezierAA, WideLine};
 #[cfg(feature = "bezier")]
 #[cfg_attr(docsrs, doc(cfg(feature = "bezier")))]
 pub use bezier::QuadBezier;
@@ -80,10 +32,10 @@ pub use circle::Circle;
 pub use ellipse::{Ellipse, EllipseRect};
 #[cfg(feature = "line")]
 #[cfg_attr(docsrs, doc(cfg(feature = "line")))]
-pub use line::Bresenham;
+pub use line::{Bresenham, Line};
 #[cfg(feature = "line3d")]
 #[cfg_attr(docsrs, doc(cfg(feature = "line3d")))]
-pub use line3d::Bresenham3d;
+pub use line3d::Line3d;
 
 /// Convenient typedef for two machine-sized integers
 pub type Point = (isize, isize);
@@ -92,4 +44,3 @@ pub type Point = (isize, isize);
 #[cfg(feature = "line3d")]
 #[cfg_attr(docsrs, doc(cfg(feature = "line3d")))]
 pub type Point3 = (isize, isize, isize);
-

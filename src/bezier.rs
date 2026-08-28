@@ -1,11 +1,11 @@
 //! Quadratic Bézier curves from Alois Zingl's `plotQuadBezier`.
 
-use crate::line::Bresenham;
+use crate::line::Line;
 use crate::Point;
 
 enum SegState {
     Curve,
-    Line(Bresenham),
+    Line(Line),
     Done,
 }
 
@@ -104,7 +104,7 @@ impl QuadBezierSeg {
             dx: 0.0,
             dy: 0.0,
             err: 0.0,
-            state: SegState::Line(Bresenham::new((x0, y0), (x2, y2))),
+            state: SegState::Line(Line::new((x0, y0), (x2, y2))),
         }
     }
 }
@@ -146,7 +146,7 @@ impl Iterator for QuadBezierSeg {
 
                 if !(self.dy < 0.0 && self.dx > 0.0) {
                     self.state =
-                        SegState::Line(Bresenham::new((self.x0, self.y0), (self.x2, self.y2)));
+                        SegState::Line(Line::new((self.x0, self.y0), (self.x2, self.y2)));
                 }
 
                 Some(p)

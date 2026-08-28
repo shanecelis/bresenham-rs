@@ -1,9 +1,9 @@
-//! 2D Bresenham line (Cargo feature `line`).
+//! 2D line (Cargo feature `line`).
 
 use crate::Point;
 
 /// Line-drawing iterator. Half-open: yields `start..end`.
-pub struct Bresenham {
+pub struct Line {
     x: isize,
     y: isize,
     dx: isize,
@@ -12,6 +12,9 @@ pub struct Bresenham {
     diff: isize,
     octant: Octant,
 }
+
+/// Type alias for [`Line`].
+pub type Bresenham = Line;
 
 struct Octant(u8);
 
@@ -86,13 +89,13 @@ impl Octant {
     }
 }
 
-impl Bresenham {
+impl Line {
     /// Creates a new iterator. Yields points from `start` toward `end`,
     /// excluding `end` (`start..end`). The set of points does not depend on
-    /// direction: `Bresenham::new(a, b)` and `Bresenham::new(b, a)` visit the
-    /// same interior pixels (in reverse order).
+    /// direction: `Line::new(a, b)` and `Line::new(b, a)` visit the same
+    /// interior pixels (in reverse order).
     #[inline]
-    pub fn new(start: Point, end: Point) -> Bresenham {
+    pub fn new(start: Point, end: Point) -> Line {
         let octant = Octant::from_points(start, end);
 
         let start = octant.to_octant0(start);
@@ -101,7 +104,7 @@ impl Bresenham {
         let dx = end.0 - start.0;
         let dy = end.1 - start.1;
 
-        Bresenham {
+        Line {
             x: start.0,
             y: start.1,
             dx: dx,
@@ -113,7 +116,7 @@ impl Bresenham {
     }
 }
 
-impl Iterator for Bresenham {
+impl Iterator for Line {
     type Item = Point;
 
     #[inline]
@@ -143,12 +146,12 @@ impl Iterator for Bresenham {
 
 #[cfg(test)]
 mod tests {
-    use super::Bresenham;
+    use super::Line;
     use std::vec::Vec;
 
     #[test]
     fn test_wp_example() {
-        let bi = Bresenham::new((0, 1), (6, 4));
+        let bi = Line::new((0, 1), (6, 4));
         let res: Vec<_> = bi.collect();
 
         assert_eq!(
@@ -159,7 +162,7 @@ mod tests {
 
     #[test]
     fn test_inverse_wp() {
-        let bi = Bresenham::new((6, 4), (0, 1));
+        let bi = Line::new((6, 4), (0, 1));
         let res: Vec<_> = bi.collect();
 
         assert_eq!(
@@ -174,8 +177,8 @@ mod tests {
             for y0 in -8..=8 {
                 for x1 in -8..=8 {
                     for y1 in -8..=8 {
-                        let fwd: Vec<_> = Bresenham::new((x0, y0), (x1, y1)).collect();
-                        let rev: Vec<_> = Bresenham::new((x1, y1), (x0, y0)).collect();
+                        let fwd: Vec<_> = Line::new((x0, y0), (x1, y1)).collect();
+                        let rev: Vec<_> = Line::new((x1, y1), (x0, y0)).collect();
                         let mut fwd_inc = fwd.clone();
                         let mut rev_inc = rev.clone();
                         if (x0, y0) != (x1, y1) {
@@ -200,7 +203,7 @@ mod tests {
 
     #[test]
     fn test_straight_hline() {
-        let bi = Bresenham::new((2, 3), (5, 3));
+        let bi = Line::new((2, 3), (5, 3));
         let res: Vec<_> = bi.collect();
 
         assert_eq!(res, [(2, 3), (3, 3), (4, 3)]);
@@ -208,7 +211,7 @@ mod tests {
 
     #[test]
     fn test_straight_vline() {
-        let bi = Bresenham::new((2, 3), (2, 6));
+        let bi = Line::new((2, 3), (2, 6));
         let res: Vec<_> = bi.collect();
 
         assert_eq!(res, [(2, 3), (2, 4), (2, 5)]);
@@ -216,7 +219,7 @@ mod tests {
 
     #[test]
     fn test_degenerate() {
-        let res: Vec<_> = Bresenham::new((3, 3), (3, 3)).collect();
+        let res: Vec<_> = Line::new((3, 3), (3, 3)).collect();
         assert_eq!(res, []);
     }
 }

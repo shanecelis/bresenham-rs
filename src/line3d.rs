@@ -1,9 +1,9 @@
-//! 3D Bresenham line from Alois Zingl's `plotLine3d`.
+//! 3D line from Alois Zingl's `plotLine3d`.
 
 use crate::Point3;
 
 /// 3D line-drawing iterator. Half-open: yields `start..end`.
-pub struct Bresenham3d {
+pub struct Line3d {
     x: isize,
     y: isize,
     z: isize,
@@ -20,7 +20,7 @@ pub struct Bresenham3d {
     remaining: isize,
 }
 
-impl Bresenham3d {
+impl Line3d {
     /// Yields every voxel from `start` toward `end`, excluding `end`
     /// (`start..end`).
     #[inline]
@@ -35,7 +35,7 @@ impl Bresenham3d {
         let sz = if z0 < z1 { 1 } else { -1 };
         let dm = dx.max(dy).max(dz);
 
-        Bresenham3d {
+        Line3d {
             x: x0,
             y: y0,
             z: z0,
@@ -54,7 +54,7 @@ impl Bresenham3d {
     }
 }
 
-impl Iterator for Bresenham3d {
+impl Iterator for Line3d {
     type Item = Point3;
 
     #[inline]
@@ -88,18 +88,18 @@ impl Iterator for Bresenham3d {
 
 #[cfg(test)]
 mod tests {
-    use super::Bresenham3d;
+    use super::Line3d;
     use std::vec::Vec;
 
     #[test]
     fn test_line3d() {
-        let res: Vec<_> = Bresenham3d::new((0, 0, 0), (2, 1, 0)).collect();
+        let res: Vec<_> = Line3d::new((0, 0, 0), (2, 1, 0)).collect();
         assert_eq!(res, [(0, 0, 0), (1, 0, 0)]);
 
-        let res: Vec<_> = Bresenham3d::new((0, 0, 0), (3, 3, 3)).collect();
+        let res: Vec<_> = Line3d::new((0, 0, 0), (3, 3, 3)).collect();
         assert_eq!(res, [(0, 0, 0), (1, 1, 1), (2, 2, 2)]);
 
-        let res: Vec<_> = Bresenham3d::new((1, 2, 3), (1, 2, 3)).collect();
+        let res: Vec<_> = Line3d::new((1, 2, 3), (1, 2, 3)).collect();
         assert_eq!(res, []);
     }
 }

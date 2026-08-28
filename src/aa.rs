@@ -30,7 +30,7 @@ fn coverage_f(zingl_fade: f64) -> u8 {
 }
 
 /// Anti-aliased 2D line (Zingl `plotLineAA`). Inclusive: `start..=end`.
-pub struct BresenhamAA {
+pub struct LineAA {
     x0: isize,
     y0: isize,
     x1: isize,
@@ -47,7 +47,7 @@ pub struct BresenhamAA {
     done: bool,
 }
 
-impl BresenhamAA {
+impl LineAA {
     /// Inclusive anti-aliased line (`start..=end`).
     pub fn new(start: Point, end: Point) -> Self {
         let (x0, y0) = start;
@@ -63,7 +63,7 @@ impl BresenhamAA {
         };
         let ed = if ed == 0 { 1 } else { ed };
 
-        BresenhamAA {
+        LineAA {
             x0,
             y0,
             x1,
@@ -101,7 +101,7 @@ impl BresenhamAA {
     }
 }
 
-impl Iterator for BresenhamAA {
+impl Iterator for LineAA {
     type Item = AaPixel;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -291,7 +291,7 @@ impl Iterator for WideLine {
 
 enum BezierAaState {
     Curve,
-    Line(BresenhamAA),
+    Line(LineAA),
     Done,
 }
 
@@ -392,7 +392,7 @@ impl QuadBezierAA {
             dx: 0.0,
             dy: 0.0,
             err: 0.0,
-            state: BezierAaState::Line(BresenhamAA::new((x0, y0), (x2, y2))),
+            state: BezierAaState::Line(LineAA::new((x0, y0), (x2, y2))),
             pending: [((0, 0), 0); 3],
             pending_len: 0,
             pending_i: 0,
@@ -428,7 +428,7 @@ impl QuadBezierAA {
 
         if self.x0 == self.x2 || self.y0 == self.y2 {
             self.state =
-                BezierAaState::Line(BresenhamAA::new((self.x0, self.y0), (self.x2, self.y2)));
+                BezierAaState::Line(LineAA::new((self.x0, self.y0), (self.x2, self.y2)));
             return;
         }
 
@@ -462,7 +462,7 @@ impl QuadBezierAA {
 
         if !(self.dy < self.dx) {
             self.state =
-                BezierAaState::Line(BresenhamAA::new((self.x0, self.y0), (self.x2, self.y2)));
+                BezierAaState::Line(LineAA::new((self.x0, self.y0), (self.x2, self.y2)));
         }
     }
 }
@@ -491,12 +491,12 @@ impl Iterator for QuadBezierAA {
 
 #[cfg(test)]
 mod tests {
-    use super::{BresenhamAA, WideLine, QuadBezierAA};
+    use super::{LineAA, WideLine, QuadBezierAA};
     use std::vec::Vec;
 
     #[test]
     fn test_line_aa() {
-        let res: Vec<_> = BresenhamAA::new((0, 0), (4, 0)).collect();
+        let res: Vec<_> = LineAA::new((0, 0), (4, 0)).collect();
         assert_eq!(
             res,
             [
@@ -508,7 +508,7 @@ mod tests {
             ]
         );
 
-        let res: Vec<_> = BresenhamAA::new((0, 1), (6, 4)).collect();
+        let res: Vec<_> = LineAA::new((0, 1), (6, 4)).collect();
         assert_eq!(
             res,
             [
@@ -525,7 +525,7 @@ mod tests {
             ]
         );
 
-        let res: Vec<_> = BresenhamAA::new((0, 0), (3, 3)).collect();
+        let res: Vec<_> = LineAA::new((0, 0), (3, 3)).collect();
         assert_eq!(
             res,
             [

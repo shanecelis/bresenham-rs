@@ -4,15 +4,16 @@ version = "0.2.0"
 authors = ["Marc Brinkmann <git@marcbrinkmann.de>", "Shane Celis <shane.celis@gmail.com>"]
 license = "MIT"
 edition = "2021"
+readme = "README.md"
 description = "A fast, iterator-based integer-only implementation of Bresenham's line algorithm."
 repository = "https://github.com/mbr/bresenham-rs"
 documentation = "https://mbr.github.io/bresenham-rs/bresenham"
 
 [features]
 default = ["line"]
-## 2D Bresenham line (`Bresenham`)
+## 2D line (`Line`; alias `Bresenham`)
 line = []
-## 3D Bresenham line (`Bresenham3d`)
+## 3D line (`Line3d`; alias `Bresenham3d`)
 line3d = []
 ## Midpoint circle (`Circle`)
 circle = []
@@ -20,7 +21,7 @@ circle = []
 ellipse = []
 ## Quadratic Bézier (`QuadBezier`); implies `line`
 bezier = ["line", "dep:libm"]
-## Anti-aliased line, thick line, and quadratic Bézier (`BresenhamAA`, `WideLine`, `QuadBezierAA`)
+## Anti-aliased line, thick line, and quadratic Bézier (`LineAA`, `WideLine`, `QuadBezierAA`)
 aa = ["dep:libm"]
 
 [package.metadata.docs.rs]

@@ -21,11 +21,14 @@ Integer lines are half-open: `start` is included, `end` is not. Anti-aliased
 lines and quadratic Béziers include both endpoints. Circles and ellipses are
 closed outlines. Enable `fill` with `circle` and/or `ellipse` for
 `Fillable::fill`, which yields one inclusive `[x0, x1]` `HLine` per distinct
-row.
-Half-open vs inclusive is a performance choice, not a convenience wrapper.
+row. 
 
-`Bresenham`, `Bresenham3d`, and `BresenhamAA` are type aliases for `Line`,
-`Line3d`, and `LineAA`.
+The boundaries half-open or inclusive was chosen for performance, composability,
+and ease to convert one to the other, e.g., a line may be made inclusive by
+drawing the line and then plotting its `end` argument. An inclusive interval may
+be created half-open by dropping its last element. This library does not provide
+those conveniences because they do incur a small performance penalty, and I am
+of the opinion that performance degradation should not be made convenient.
 
 ```rust
 for (x, y) in bresenham::Line::new((0, 1), (6, 4)) {

@@ -14,8 +14,7 @@ mod circle;
 #[cfg(feature = "ellipse")]
 mod ellipse;
 #[cfg(feature = "fill")]
-#[cfg_attr(docsrs, doc(cfg(feature = "fill")))]
-pub mod fill;
+mod fill;
 #[cfg(feature = "line")]
 mod line;
 #[cfg(feature = "line3d")]
@@ -33,6 +32,9 @@ pub use circle::Circle;
 #[cfg(feature = "ellipse")]
 #[cfg_attr(docsrs, doc(cfg(feature = "ellipse")))]
 pub use ellipse::{Ellipse, EllipseRect};
+#[cfg(feature = "fill")]
+#[cfg_attr(docsrs, doc(cfg(feature = "fill")))]
+pub use fill::{Fillable, HLine};
 #[cfg(feature = "line")]
 #[cfg_attr(docsrs, doc(cfg(feature = "line")))]
 pub use line::{Bresenham, Line};

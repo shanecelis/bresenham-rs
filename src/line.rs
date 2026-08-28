@@ -2,7 +2,7 @@
 
 use crate::Point;
 
-/// Line-drawing iterator. Half-open: yields `start..end`.
+/// Line-drawing iterator. Half-open: yields `[start, end)`.
 pub struct Line {
     x: isize,
     y: isize,
@@ -91,7 +91,7 @@ impl Octant {
 
 impl Line {
     /// Creates a new iterator. Yields points from `start` toward `end`,
-    /// excluding `end` (`start..end`). The set of points does not depend on
+    /// excluding `end` (`[start, end)`). The set of points does not depend on
     /// direction: `Line::new(a, b)` and `Line::new(b, a)` visit the same
     /// interior pixels (in reverse order).
     #[inline]

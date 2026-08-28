@@ -155,7 +155,7 @@ impl Iterator for QuadBezierSeg {
     }
 }
 
-/// Quadratic Bézier from `p0` to `p2` with control point `p1`. Inclusive: `p0..=p2`.
+/// Quadratic Bézier from `p0` to `p2` with control point `p1`. Inclusive: `[p0, p2]`.
 ///
 /// Any control-point configuration is accepted; the curve is split at gradient
 /// sign changes the same way as Zingl's `plotQuadBezier`.
@@ -167,7 +167,7 @@ pub struct QuadBezier {
 }
 
 impl QuadBezier {
-    /// Inclusive pixels of the quadratic Bézier (`p0..=p2`).
+    /// Inclusive pixels of the quadratic Bézier (`[p0, p2]`).
     pub fn new(p0: Point, p1: Point, p2: Point) -> Self {
         let (specs, n) = segments(p0.0, p0.1, p1.0, p1.1, p2.0, p2.1);
         QuadBezier {

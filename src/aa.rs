@@ -29,7 +29,7 @@ fn coverage_f(zingl_fade: f64) -> u8 {
     }
 }
 
-/// Anti-aliased 2D line (Zingl `plotLineAA`). Inclusive: `start..=end`.
+/// Anti-aliased 2D line (Zingl `plotLineAA`). Inclusive: `[start, end]`.
 pub struct LineAA {
     x0: isize,
     y0: isize,
@@ -48,7 +48,7 @@ pub struct LineAA {
 }
 
 impl LineAA {
-    /// Inclusive anti-aliased line (`start..=end`).
+    /// Inclusive anti-aliased line (`[start, end]`).
     pub fn new(start: Point, end: Point) -> Self {
         let (x0, y0) = start;
         let (x1, y1) = end;
@@ -158,7 +158,7 @@ enum LwPhase {
 }
 
 /// Anti-aliased line of a given pixel width (Zingl `plotWideLine`).
-/// Inclusive: `start..=end`.
+/// Inclusive: `[start, end]`.
 pub struct WideLine {
     x0: isize,
     y0: isize,
@@ -176,7 +176,7 @@ pub struct WideLine {
 }
 
 impl WideLine {
-    /// Inclusive anti-aliased line (`start..=end`) with width `wd`.
+    /// Inclusive anti-aliased line (`[start, end]`) with width `wd`.
     pub fn new(start: Point, end: Point, wd: f32) -> Self {
         let (x0, y0) = start;
         let (x1, y1) = end;
@@ -295,7 +295,7 @@ enum BezierAaState {
     Done,
 }
 
-/// Anti-aliased quadratic Bézier (Zingl `plotQuadBezierSegAA`). Inclusive: `p0..=p2`.
+/// Anti-aliased quadratic Bézier (Zingl `plotQuadBezierSegAA`). Inclusive: `[p0, p2]`.
 ///
 /// Like the C original, the gradient sign must not change along the segment;
 /// if it does, the remainder is finished with an anti-aliased line.
@@ -319,7 +319,7 @@ pub struct QuadBezierAA {
 }
 
 impl QuadBezierAA {
-    /// Inclusive quadratic Bézier (`p0..=p2`) with control point `p1`.
+    /// Inclusive quadratic Bézier (`[p0, p2]`) with control point `p1`.
     pub fn new(p0: Point, p1: Point, p2: Point) -> Self {
         let (mut x0, mut y0) = p0;
         let (x1, y1) = p1;

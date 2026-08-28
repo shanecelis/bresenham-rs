@@ -2,7 +2,7 @@
 
 use crate::Point3;
 
-/// 3D line-drawing iterator. Half-open: yields `start..end`.
+/// 3D line-drawing iterator. Half-open: yields `[start, end)`.
 pub struct Line3d {
     x: isize,
     y: isize,
@@ -22,7 +22,7 @@ pub struct Line3d {
 
 impl Line3d {
     /// Yields every voxel from `start` toward `end`, excluding `end`
-    /// (`start..end`).
+    /// (`[start, end)`).
     #[inline]
     pub fn new(start: Point3, end: Point3) -> Self {
         let (x0, y0, z0) = start;

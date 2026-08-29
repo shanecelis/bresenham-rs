@@ -1,5 +1,7 @@
 //! 3D line from Alois Zingl's `plotLine3d`.
 
+#[cfg(feature = "inclusive")]
+use crate::Inclusive;
 use crate::Point3;
 
 /// 3D line-drawing iterator. Half-open: yields `[start, end)`.
@@ -52,18 +54,10 @@ impl Line3d {
             remaining: dm,
         }
     }
-}
 
-impl Iterator for Line3d {
-    type Item = Point3;
-
+    /// Next voxel without checking whether we are past `end`.
     #[inline]
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.remaining == 0 {
-            return None;
-        }
-        self.remaining -= 1;
-
+    fn advance(&mut self) -> Point3 {
         let p = (self.x, self.y, self.z);
 
         self.x_err -= self.dx;
@@ -82,7 +76,50 @@ impl Iterator for Line3d {
             self.z += self.sz;
         }
 
-        Some(p)
+        p
+    }
+}
+
+impl Iterator for Line3d {
+    type Item = Point3;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.remaining <= 0 {
+            None
+        } else {
+            self.remaining -= 1;
+            Some(self.advance())
+        }
+    }
+}
+
+#[cfg(feature = "inclusive")]
+struct Line3dInclusive(Line3d);
+
+#[cfg(feature = "inclusive")]
+impl Iterator for Line3dInclusive {
+    type Item = Point3;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.0.remaining < 0 {
+            None
+        } else {
+            self.0.remaining -= 1;
+            Some(self.0.advance())
+        }
+    }
+}
+
+#[cfg(feature = "inclusive")]
+#[cfg_attr(docsrs, doc(cfg(feature = "inclusive")))]
+impl Inclusive for Line3d {
+    type Item = Point3;
+
+    #[inline]
+    fn inclusive(self) -> impl Iterator<Item = Point3> {
+        Line3dInclusive(self)
     }
 }
 
@@ -101,5 +138,20 @@ mod tests {
 
         let res: Vec<_> = Line3d::new((1, 2, 3), (1, 2, 3)).collect();
         assert_eq!(res, []);
+    }
+
+    #[cfg(feature = "inclusive")]
+    #[test]
+    fn test_inclusive_line3d() {
+        use crate::Inclusive;
+
+        let res: Vec<_> = Line3d::new((0, 0, 0), (2, 1, 0)).inclusive().collect();
+        assert_eq!(res, [(0, 0, 0), (1, 0, 0), (2, 1, 0)]);
+
+        let res: Vec<_> = Line3d::new((0, 0, 0), (3, 3, 3)).inclusive().collect();
+        assert_eq!(res, [(0, 0, 0), (1, 1, 1), (2, 2, 2), (3, 3, 3)]);
+
+        let res: Vec<_> = Line3d::new((1, 2, 3), (1, 2, 3)).inclusive().collect();
+        assert_eq!(res, [(1, 2, 3)]);
     }
 }

@@ -172,6 +172,8 @@ impl Iterator for LineInclusive {
 #[cfg(feature = "inclusive")]
 #[cfg_attr(docsrs, doc(cfg(feature = "inclusive")))]
 impl Inclusive for Line {
+    type Item = Point;
+
     #[inline]
     fn inclusive(self) -> impl Iterator<Item = Point> {
         LineInclusive(self)

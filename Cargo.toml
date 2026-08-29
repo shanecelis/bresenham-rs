@@ -21,7 +21,7 @@ circle = []
 ellipse = []
 ## Filled scanlines (`fill::HLine`, `fill::Fillable`)
 fill = []
-## Inclusive `[start, end]` adapter for `Line`
+## Inclusive `[start, end]` adapter for `Line` and `Line3d`
 inclusive = []
 ## Quadratic Bézier (`QuadBezier`); implies `line`
 bezier = ["line", "dep:libm"]
@@ -42,3 +42,8 @@ criterion = "0.5"
 name = "line"
 harness = false
 required-features = ["inclusive"]
+
+[[bench]]
+name = "line3d"
+harness = false
+required-features = ["inclusive", "line3d"]

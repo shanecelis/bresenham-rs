@@ -72,6 +72,6 @@ and/or `ellipse`.
 
 ## Inclusive
 
-The `inclusive` Cargo feature adds `Inclusive::inclusive` on `Line`. It yields
-`[start, end]` using the same stepper as the half-open iterator. Enable it
-together with `line`.
+The `inclusive` Cargo feature adds `Inclusive::inclusive` on `Line` and
+`Line3d`, which returns an iterator that yields the end point making the
+interval inclusive `[start, end]` instead of half-open.

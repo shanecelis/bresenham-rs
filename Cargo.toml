@@ -21,6 +21,8 @@ circle = []
 ellipse = []
 ## Filled scanlines (`fill::HLine`, `fill::Fillable`)
 fill = []
+## Inclusive `[start, end]` adapter for `Line`
+inclusive = []
 ## Quadratic Bézier (`QuadBezier`); implies `line`
 bezier = ["line", "dep:libm"]
 ## Anti-aliased line, thick line, and quadratic Bézier (`LineAA`, `WideLine`, `QuadBezierAA`)
@@ -32,3 +34,11 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 libm = { version = "0.2", optional = true }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "line"
+harness = false
+required-features = ["inclusive"]

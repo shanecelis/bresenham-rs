@@ -69,3 +69,9 @@ The `fill` Cargo feature adds `Fillable::fill` on `Circle`, `Ellipse`, and
 `EllipseRect`. It yields one `HLine` per distinct row: a horizontal span from
 the leftmost filled pixel to the rightmost. Enable it together with `circle`
 and/or `ellipse`.
+
+## Inclusive
+
+The `inclusive` Cargo feature adds `Inclusive::inclusive` on `Line`. It yields
+`[start, end]` using the same stepper as the half-open iterator. Enable it
+together with `line`.

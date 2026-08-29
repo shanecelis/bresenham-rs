@@ -1,5 +1,7 @@
 //! 2D line (Cargo feature `line`).
 
+#[cfg(feature = "inclusive")]
+use crate::Inclusive;
 use crate::Point;
 
 /// Line-drawing iterator. Half-open: yields `[start, end)`.
@@ -114,20 +116,10 @@ impl Line {
             octant: octant,
         }
     }
-}
 
-impl Iterator for Line {
-    type Item = Point;
-
+    /// Next point without checking whether we are past `end`.
     #[inline]
-    fn next(&mut self) -> Option<Self::Item> {
-        // "The endpoints of the [bresenham] line are the pixels at (x0, y0) and
-        // (x1, y1) where the first coordinate of the pair is the column and the
-        // second is the row."
-        if self.x >= self.x1 {
-            return None;
-        }
-
+    fn advance(&mut self) -> Point {
         let p = (self.x, self.y);
 
         if self.diff > 0 || (self.diff == 0 && self.octant.step_minor_on_tie()) {
@@ -140,7 +132,49 @@ impl Iterator for Line {
         // loop inc
         self.x += 1;
 
-        Some(self.octant.from_octant0(p))
+        self.octant.from_octant0(p)
+    }
+}
+
+impl Iterator for Line {
+    type Item = Point;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        // "The endpoints of the [bresenham] line are the pixels at (x0, y0) and
+        // (x1, y1) where the first coordinate of the pair is the column and the
+        // second is the row."
+        if self.x >= self.x1 {
+            None
+        } else {
+            Some(self.advance())
+        }
+    }
+}
+
+#[cfg(feature = "inclusive")]
+struct LineInclusive(Line);
+
+#[cfg(feature = "inclusive")]
+impl Iterator for LineInclusive {
+    type Item = Point;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.0.x > self.0.x1 {
+            None
+        } else {
+            Some(self.0.advance())
+        }
+    }
+}
+
+#[cfg(feature = "inclusive")]
+#[cfg_attr(docsrs, doc(cfg(feature = "inclusive")))]
+impl Inclusive for Line {
+    #[inline]
+    fn inclusive(self) -> impl Iterator<Item = Point> {
+        LineInclusive(self)
     }
 }
 
@@ -215,5 +249,72 @@ mod tests {
     fn test_degenerate() {
         let res: Vec<_> = Line::new((3, 3), (3, 3)).collect();
         assert_eq!(res, []);
+    }
+
+    #[cfg(feature = "inclusive")]
+    #[test]
+    fn test_inclusive_wp_example() {
+        use crate::Inclusive;
+        let res: Vec<_> = Line::new((0, 1), (6, 4)).inclusive().collect();
+        assert_eq!(
+            res,
+            [(0, 1), (1, 1), (2, 2), (3, 2), (4, 3), (5, 3), (6, 4)]
+        );
+    }
+
+    #[cfg(feature = "inclusive")]
+    #[test]
+    fn test_inclusive_inverse_wp() {
+        use crate::Inclusive;
+        let res: Vec<_> = Line::new((6, 4), (0, 1)).inclusive().collect();
+        assert_eq!(
+            res,
+            [(6, 4), (5, 3), (4, 3), (3, 2), (2, 2), (1, 1), (0, 1)]
+        );
+    }
+
+    #[cfg(feature = "inclusive")]
+    #[test]
+    fn test_inclusive_straight() {
+        use crate::Inclusive;
+        let res: Vec<_> = Line::new((2, 3), (5, 3)).inclusive().collect();
+        assert_eq!(res, [(2, 3), (3, 3), (4, 3), (5, 3)]);
+
+        let res: Vec<_> = Line::new((2, 3), (2, 6)).inclusive().collect();
+        assert_eq!(res, [(2, 3), (2, 4), (2, 5), (2, 6)]);
+    }
+
+    #[cfg(feature = "inclusive")]
+    #[test]
+    fn test_inclusive_degenerate() {
+        use crate::Inclusive;
+        let res: Vec<_> = Line::new((3, 3), (3, 3)).inclusive().collect();
+        assert_eq!(res, [(3, 3)]);
+    }
+
+    #[cfg(feature = "inclusive")]
+    #[test]
+    fn test_inclusive_direction_symmetric() {
+        use crate::Inclusive;
+        for x0 in -8..=8 {
+            for y0 in -8..=8 {
+                for x1 in -8..=8 {
+                    for y1 in -8..=8 {
+                        let fwd: Vec<_> = Line::new((x0, y0), (x1, y1)).inclusive().collect();
+                        let rev: Vec<_> = Line::new((x1, y1), (x0, y0)).inclusive().collect();
+                        assert!(
+                            fwd.iter().rev().eq(rev.iter()),
+                            "asymmetric inclusive ({}, {}) -> ({}, {}): {:?} vs {:?}",
+                            x0,
+                            y0,
+                            x1,
+                            y1,
+                            fwd,
+                            rev
+                        );
+                    }
+                }
+            }
+        }
     }
 }

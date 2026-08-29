@@ -13,15 +13,12 @@ methods or surfaces.
 | `line3d`  | `Line3d`                                   | half-open `[start, end)` |
 | `circle`  | `Circle`                                   | closed outline           |
 | `ellipse` | `Ellipse`, `EllipseRect`                   | closed outline           |
-| `fill`    | `fill::HLine`, `fill::Fillable`            | inclusive `[x0, x1]`     |
 | `bezier`  | `QuadBezier`                               | inclusive `[start, end]` |
 | `aa`      | `LineAA`, `WideLine`, `QuadBezierAA`       | inclusive `[start, end]` |
 
 Integer lines are half-open: `start` is included, `end` is not. Anti-aliased
 lines and quadratic Béziers include both endpoints. Circles and ellipses are
-closed outlines. Enable `fill` with `circle` and/or `ellipse` for
-`Fillable::fill`, which yields one inclusive `[x0, x1]` `HLine` per distinct
-row. 
+closed outlines.
 
 The boundaries half-open or inclusive was chosen for performance, composability,
 and ease to convert one to the other, e.g., a line may be made inclusive by
@@ -44,3 +41,10 @@ for (x, y) in bresenham::Line::new((0, 1), (6, 4)) {
 (4, 3)
 (5, 3)
 ```
+
+## Fill
+
+The `fill` feature adds `Fillable::fill` on `Circle`, `Ellipse`, and
+`EllipseRect`. It yields one `HLine` per distinct row: a horizontal span from
+the leftmost filled pixel to the rightmost. Enable it together with `circle`
+and/or `ellipse`.

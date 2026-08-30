@@ -27,26 +27,12 @@ for (x, y) in bresenham::Line::new((0, 1), (6, 4)) {
 (5, 3)
 ```
 
-## Bresenham Variant Notes
-
-By default lines are drawn on a half-open interval `[start, end)`: the `start`
-point is included, but the `end` point is not. This allows one to chain multiple
-lines together without any overdraw. However, one can opt-in to the "inclusive" Cargo feature to get an `line.inclusive()` iterator.
-
-This particular implementation of Bresenham breaks ties in quadrants such that
-an inclusive line drawn from `(A, B)` and from `(B, A)` will cover the same
-points.
-
-## Alois Zingl's Additions
+## Shapes
 
 [Alois Zingl's notes](https://zingl.github.io/bresenham.html) on Bresenham were
 used to add other shapes, which are available as optional Cargo features.
 
-## Shapes
-
 <img width="512" height="384" alt="demo" src="https://github.com/user-attachments/assets/f24515b4-24d9-41bd-8c2b-69e0b0db6af8" />
-
-Numbers match the digit shown in the demo.
 
 | Demo | Shape              | Type                         | Interval                 | Feature          |
 |------|--------------------|------------------------------|--------------------------|------------------|
@@ -121,3 +107,13 @@ for (x, y) in bresenham::Line::new((0, 1), (6, 4)).inclusive() {
 Note: `line.inclusive()` is semantically equivalent to doing `Line::new(start,
 end).chain(iter::once(end))` but it does not have any iterator chaining
 overhead.
+
+## Bresenham Line Variant Notes
+
+By default lines are drawn on a half-open interval `[start, end)`: the `start`
+point is included, but the `end` point is not. This allows one to chain multiple
+lines together without any overdraw. However, one can opt-in to the "inclusive" Cargo feature to get an `line.inclusive()` iterator.
+
+This particular implementation of Bresenham breaks ties in quadrants such that
+an inclusive line drawn from `(A, B)` and from `(B, A)` will cover the same
+points.

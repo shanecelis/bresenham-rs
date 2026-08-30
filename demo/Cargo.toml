@@ -4,6 +4,22 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
+[lib]
+name = "bresenham_demo"
+path = "src/lib.rs"
+
+[[bin]]
+name = "bresenham-demo"
+path = "src/main.rs"
+
+[[bin]]
+name = "record-demo"
+path = "src/bin/record.rs"
+required-features = ["record"]
+
+[features]
+record = ["dep:gif"]
+
 [dependencies]
 bresenham = { path = "..", default-features = false, features = [
     "line",
@@ -13,6 +29,7 @@ bresenham = { path = "..", default-features = false, features = [
     "aa",
     "fill",
 ] }
+gif = { version = "0.13", optional = true }
 wasm-bindgen = { version = "0.2", default-features = false }
 web-sys = { version = "0.3", features = [
     "CanvasRenderingContext2d",

@@ -1,7 +1,7 @@
 //! Shared autoplay scene used by the WASM demo and the GIF recorder.
 
 use bresenham::{
-    Circle, EllipseRect, Fillable, Line, LineAA, Point, QuadBezier, QuadBezierAA, WideLine,
+    Circle, EllipseRect, Fill, Line, LineAA, Point, QuadBezier, QuadBezierAA, WideLine,
 };
 
 pub const WIDTH: u32 = 64;

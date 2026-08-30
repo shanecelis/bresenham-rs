@@ -11,7 +11,7 @@ documentation = "https://mbr.github.io/bresenham-rs/bresenham"
 exclude = ["demo", "graphics"]
 
 [workspace]
-members = ["demo"]
+members = ["demo", "demo/record"]
 default-members = ["."]
 
 [features]

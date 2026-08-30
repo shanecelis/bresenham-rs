@@ -9,10 +9,9 @@ use std::path::PathBuf;
 const SCALE: u32 = 8;
 
 fn main() {
-    let out = env::args()
-        .nth(1)
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../graphics/demo.gif"));
+    let out = env::args().nth(1).map(PathBuf::from).unwrap_or_else(|| {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../graphics/demo.gif")
+    });
     if let Some(dir) = out.parent() {
         let _ = std::fs::create_dir_all(dir);
     }

@@ -189,7 +189,7 @@ impl Demo {
         if self.dragging {
             return Ok(());
         }
-        self.kind = self.kind.next();
+        self.scene.next_kind();
         self.mode = Mode::Click { idle: 0 };
         self.paint_shape()
     }

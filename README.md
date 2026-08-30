@@ -42,16 +42,35 @@ points.
 [Alois Zingl's notes](https://zingl.github.io/bresenham.html) on Bresenham were
 used to add other shapes, which are available as optional Cargo features.
 
-## Cargo Features
+## Shapes
 
-| Feature          | Types                                | Interval                 |
-|------------------|--------------------------------------|--------------------------|
-| `line` (default) | `Line`                               | half-open `[start, end)` |
-| `line3d`         | `Line3d`                             | half-open `[start, end)` |
-| `circle`         | `Circle`                             | closed outline           |
-| `ellipse`        | `Ellipse`, `EllipseRect`             | closed outline           |
-| `bezier`         | `QuadBezier`                         | inclusive `[start, end]` |
-| `aa`             | `LineAA`, `WideLine`, `QuadBezierAA` | inclusive `[start, end]` |
+Numbers match the digit shown in the demo.
+
+| Demo | Shape              | Type                         | Interval                 | Feature          |
+|------|--------------------|------------------------------|--------------------------|------------------|
+| 0    | Line               | `Line`                       | half-open `[start, end)` | `line` (default) |
+| 1    | Anti-aliased line  | `LineAA`                     | inclusive `[start, end]` | `aa`             |
+| 2    | Circle             | `Circle`                     | closed outline           | `circle`         |
+| 3    | Ellipse            | `EllipseRect`                | closed outline           | `ellipse`        |
+| 4    | Quadratic Bézier   | `QuadBezier`                 | inclusive `[start, end]` | `bezier`         |
+| 5    | Anti-aliased Bézier| `QuadBezierAA`               | inclusive `[start, end]` | `aa`             |
+| 6    | Wide line          | `WideLine`                   | inclusive `[start, end]` | `aa`             |
+| 7    | Filled circle      | `Circle` + `Fill`            | scanlines                | `circle`, `fill` |
+
+`Line3d` (`line3d`) and center-and-radii `Ellipse` (`ellipse`) are also available; they are not in the demo.
+
+## Demo
+
+The WASM demo shows a 64×48 canvas that autoplays the shapes above. 
+
+```sh
+cd demo
+trunk serve; # Open the URL trunk prints.
+```
+
+Left-drag draws the current shape between two points. Right-click stops autoplay
+and advances to the next shape. After a few seconds of inactivity, autoplay
+resumes.
 
 ## Boundaries
 

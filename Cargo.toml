@@ -5,7 +5,7 @@ authors = ["Marc Brinkmann <git@marcbrinkmann.de>", "Shane Celis <shane.celis@gm
 license = "MIT"
 edition = "2021"
 readme = "README.md"
-description = "A fast, iterator-based integer-only implementation of Bresenham's line algorithm."
+description = "A fast, iterator-based integer-only implementation of Bresenham's line algorithm and more."
 repository = "https://github.com/mbr/bresenham-rs"
 documentation = "https://mbr.github.io/bresenham-rs/bresenham"
 exclude = ["demo", "graphics"]
@@ -18,7 +18,7 @@ default-members = ["."]
 default = ["line"]
 ## 2D line (`Line`; alias `Bresenham`)
 line = []
-## 3D line (`Line3d`; alias `Bresenham3d`)
+## 3D line (`Line3d`)
 line3d = []
 ## Midpoint circle (`Circle`)
 circle = []

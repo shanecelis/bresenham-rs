@@ -1,3 +1,6 @@
 [build]
 target = "index.html"
 dist = "dist"
+release = true
+cargo_profile = "wasm"
+minify = "on_release"

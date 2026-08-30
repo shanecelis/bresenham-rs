@@ -3,7 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <title>bresenham-rs</title>
-    <link data-trunk rel="rust" />
+    <link
+      data-trunk
+      rel="rust"
+      data-wasm-opt="z"
+      data-wasm-opt-params="--enable-bulk-memory --enable-bulk-memory-opt --enable-sign-ext --enable-nontrapping-float-to-int"
+    />
     <style>
       html,
       body {

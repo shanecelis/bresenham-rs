@@ -431,58 +431,44 @@ fn request_frame(cb: &Closure<dyn FnMut()>) {
 }
 
 fn main() {
-    std::panic::set_hook(Box::new(|info| {
-        web_sys::console::error_1(&info.to_string().into());
-    }));
-    if let Err(e) = start() {
-        web_sys::console::error_1(&e);
-    }
+    start();
 }
 
-fn start() -> Result<(), JsValue> {
-    let window = web_sys::window().ok_or_else(|| JsValue::from_str("no window"))?;
-    let document = window
-        .document()
-        .ok_or_else(|| JsValue::from_str("no document"))?;
+fn start() {
+    let window = web_sys::window().unwrap();
+    let document = window.document().unwrap();
     let canvas = document
         .get_element_by_id("grid")
-        .ok_or_else(|| JsValue::from_str("missing #grid"))?
-        .dyn_into::<HtmlCanvasElement>()?;
+        .unwrap()
+        .dyn_into::<HtmlCanvasElement>()
+        .unwrap();
 
-    let demo = Rc::new(RefCell::new(Demo::new(canvas.clone())?));
+    let demo = Rc::new(RefCell::new(Demo::new(canvas.clone()).unwrap()));
 
     let down_demo = Rc::clone(&demo);
     let on_down = Closure::wrap(Box::new(move |event: MouseEvent| {
-        if let Err(e) = down_demo.borrow_mut().on_down(&event) {
-            web_sys::console::error_1(&e);
-        }
+        let _ = down_demo.borrow_mut().on_down(&event);
     }) as Box<dyn FnMut(_)>);
     canvas.set_onmousedown(Some(on_down.as_ref().unchecked_ref()));
     on_down.forget();
 
     let move_demo = Rc::clone(&demo);
     let on_move = Closure::wrap(Box::new(move |event: MouseEvent| {
-        if let Err(e) = move_demo.borrow_mut().on_move(&event) {
-            web_sys::console::error_1(&e);
-        }
+        let _ = move_demo.borrow_mut().on_move(&event);
     }) as Box<dyn FnMut(_)>);
     canvas.set_onmousemove(Some(on_move.as_ref().unchecked_ref()));
     on_move.forget();
 
     let up_demo = Rc::clone(&demo);
     let on_up = Closure::wrap(Box::new(move |event: MouseEvent| {
-        if let Err(e) = up_demo.borrow_mut().on_up(&event) {
-            web_sys::console::error_1(&e);
-        }
+        let _ = up_demo.borrow_mut().on_up(&event);
     }) as Box<dyn FnMut(_)>);
     canvas.set_onmouseup(Some(on_up.as_ref().unchecked_ref()));
     on_up.forget();
 
     let leave_demo = Rc::clone(&demo);
     let on_leave = Closure::wrap(Box::new(move |event: MouseEvent| {
-        if let Err(e) = leave_demo.borrow_mut().finish_drag(&event) {
-            web_sys::console::error_1(&e);
-        }
+        let _ = leave_demo.borrow_mut().finish_drag(&event);
     }) as Box<dyn FnMut(_)>);
     canvas.set_onmouseleave(Some(on_leave.as_ref().unchecked_ref()));
     on_leave.forget();
@@ -497,14 +483,10 @@ fn start() -> Result<(), JsValue> {
     let raf_cb = raf.clone();
     let raf_demo = Rc::clone(&demo);
     *raf.borrow_mut() = Some(Closure::wrap(Box::new(move || {
-        if let Err(e) = raf_demo.borrow_mut().tick() {
-            web_sys::console::error_1(&e);
-        }
+        let _ = raf_demo.borrow_mut().tick();
         if let Some(cb) = raf_cb.borrow().as_ref() {
             request_frame(cb);
         }
     }) as Box<dyn FnMut()>));
     request_frame(raf.borrow().as_ref().unwrap());
-
-    Ok(())
 }

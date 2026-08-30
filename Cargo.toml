@@ -8,6 +8,11 @@ readme = "README.md"
 description = "A fast, iterator-based integer-only implementation of Bresenham's line algorithm."
 repository = "https://github.com/mbr/bresenham-rs"
 documentation = "https://mbr.github.io/bresenham-rs/bresenham"
+exclude = ["demo", "graphics"]
+
+[workspace]
+members = ["demo"]
+default-members = ["."]
 
 [features]
 default = ["line"]

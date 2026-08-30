@@ -404,23 +404,9 @@ impl Demo {
         if self.dragging {
             return Ok(());
         }
-        let next = self.kind.next();
-        if next == Kind::Line {
-            self.tour = self.tour.wrapping_add(1);
-        }
-        self.kind = next;
-        match self.mode {
-            Mode::Auto { .. } => {
-                self.load_shape();
-                self.mode = Mode::Auto { step: 0, hold: 0 };
-                self.clear();
-                self.present()
-            }
-            Mode::Click { .. } => {
-                self.mode = Mode::Click { idle: 0 };
-                self.paint_shape()
-            }
-        }
+        self.kind = self.kind.next();
+        self.mode = Mode::Click { idle: 0 };
+        self.paint_shape()
     }
 }
 

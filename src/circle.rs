@@ -1,7 +1,7 @@
 //! Midpoint circle from Alois Zingl's `plotCircle`.
 
 #[cfg(feature = "fill")]
-use crate::fill::{Fillable, HLine};
+use crate::fill::{Fill, HLine};
 use crate::Point;
 
 /// Iterator over the pixels of an axis-aligned circle. Closed outline.
@@ -93,7 +93,7 @@ impl Circle {
 
 #[cfg(feature = "fill")]
 #[cfg_attr(docsrs, doc(cfg(feature = "fill")))]
-impl Fillable for Circle {
+impl Fill for Circle {
     #[inline]
     fn fill(self) -> impl Iterator<Item = HLine> {
         CircleFill {
@@ -356,7 +356,7 @@ mod tests {
     #[cfg(feature = "fill")]
     #[test]
     fn test_circle_fill() {
-        use crate::fill::{Fillable, HLine};
+        use crate::fill::{Fill, HLine};
 
         let res: Vec<_> = Circle::new((0, 0), 0).fill().collect();
         assert_eq!(res, [HLine { x0: 0, x1: 0, y: 0 }]);

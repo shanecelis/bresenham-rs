@@ -1,7 +1,7 @@
 //! Axis-aligned ellipses from Alois Zingl's `plotEllipse` and `plotEllipseRect`.
 
 #[cfg(feature = "fill")]
-use crate::fill::{Fillable, HLine};
+use crate::fill::{Fill, HLine};
 use crate::Point;
 
 enum EllipsePhase {
@@ -66,7 +66,7 @@ impl Ellipse {
 
 #[cfg(feature = "fill")]
 #[cfg_attr(docsrs, doc(cfg(feature = "fill")))]
-impl Fillable for Ellipse {
+impl Fill for Ellipse {
     #[inline]
     fn fill(self) -> impl Iterator<Item = HLine> {
         EllipseFill {
@@ -339,7 +339,7 @@ impl EllipseRect {
 
 #[cfg(feature = "fill")]
 #[cfg_attr(docsrs, doc(cfg(feature = "fill")))]
-impl Fillable for EllipseRect {
+impl Fill for EllipseRect {
     #[inline]
     fn fill(self) -> impl Iterator<Item = HLine> {
         EllipseRectFill {
@@ -658,7 +658,7 @@ mod tests {
     #[cfg(feature = "fill")]
     #[test]
     fn test_ellipse_fill() {
-        use crate::fill::{Fillable, HLine};
+        use crate::fill::{Fill, HLine};
 
         let res: Vec<_> = Ellipse::new((0, 0), 0, 0).fill().collect();
         assert_eq!(res, [HLine { x0: 0, x1: 0, y: 0 }]);
@@ -680,7 +680,7 @@ mod tests {
     #[cfg(feature = "fill")]
     #[test]
     fn test_ellipse_rect_fill() {
-        use crate::fill::{Fillable, HLine};
+        use crate::fill::{Fill, HLine};
 
         let res: Vec<_> = EllipseRect::new((0, 0), (0, 0)).fill().collect();
         assert_eq!(res, [HLine { x0: 0, x1: 0, y: 0 }]);

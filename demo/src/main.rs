@@ -1,7 +1,7 @@
 //! Pixelated canvas demo for `bresenham`. Autoplay cycles primitives; drag to draw.
 
 use bresenham::{
-    Circle, EllipseRect, Fillable, Line, LineAA, Point, QuadBezier, QuadBezierAA, WideLine,
+    Circle, EllipseRect, Fill, Line, LineAA, Point, QuadBezier, QuadBezierAA, WideLine,
 };
 use std::cell::RefCell;
 use std::rc::Rc;

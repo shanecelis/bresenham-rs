@@ -9,7 +9,7 @@ pub struct HLine {
 }
 
 /// A shape that can be filled as horizontal spans, one per distinct row.
-pub trait Fillable {
+pub trait Fill {
     /// Inclusive `[x0, x1]` chords covering the interior.
     fn fill(self) -> impl Iterator<Item = HLine>;
 }

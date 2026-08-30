@@ -36,7 +36,7 @@ pub use circle::Circle;
 pub use ellipse::{Ellipse, EllipseRect};
 #[cfg(feature = "fill")]
 #[cfg_attr(docsrs, doc(cfg(feature = "fill")))]
-pub use fill::{Fill, HLine};
+pub use fill::{Fill, Span};
 #[cfg(feature = "inclusive")]
 #[cfg_attr(docsrs, doc(cfg(feature = "inclusive")))]
 pub use inclusive::Inclusive;

@@ -73,9 +73,8 @@ convenient.
 ## Fill
 
 The `fill` Cargo feature adds `Fill::fill` on `Circle`, `Ellipse`, and
-`EllipseRect`. It yields one `HLine` per distinct row: a horizontal span from
-the leftmost filled pixel to the rightmost. Enable it together with `circle`
-and/or `ellipse`.
+`EllipseRect`. It yields one `Span` per distinct row, from the leftmost filled
+pixel to the rightmost. Enable it together with `circle` and/or `ellipse`.
 
 ## Inclusive
 

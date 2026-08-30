@@ -1,7 +1,7 @@
 //! Axis-aligned ellipses from Alois Zingl's `plotEllipse` and `plotEllipseRect`.
 
 #[cfg(feature = "fill")]
-use crate::fill::{Fill, HLine};
+use crate::fill::{Fill, Span};
 use crate::Point;
 
 enum EllipsePhase {
@@ -68,7 +68,7 @@ impl Ellipse {
 #[cfg_attr(docsrs, doc(cfg(feature = "fill")))]
 impl Fill for Ellipse {
     #[inline]
-    fn fill(self) -> impl Iterator<Item = HLine> {
+    fn fill(self) -> impl Iterator<Item = Span> {
         EllipseFill {
             e: self,
             pending: None,
@@ -78,18 +78,18 @@ impl Fill for Ellipse {
     }
 }
 
-/// Iterator over [`HLine`] chords of a filled [`Ellipse`]. Inclusive `[x0, x1]`.
+/// Iterator over [`Span`] chords of a filled [`Ellipse`]. Inclusive `[x0, x1]`.
 #[cfg(feature = "fill")]
 pub(crate) struct EllipseFill {
     e: Ellipse,
-    pending: Option<HLine>,
+    pending: Option<Span>,
     last_y: Option<isize>,
     tips: bool,
 }
 
 #[cfg(feature = "fill")]
 impl Iterator for EllipseFill {
-    type Item = HLine;
+    type Item = Span;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
@@ -107,13 +107,13 @@ impl Iterator for EllipseFill {
                     self.last_y = Some(self.e.y);
                     let x0 = self.e.xm + self.e.x;
                     let x1 = self.e.xm - self.e.x;
-                    let h = HLine {
+                    let h = Span {
                         x0,
                         x1,
                         y: self.e.ym + self.e.y,
                     };
                     if self.e.y != 0 {
-                        self.pending = Some(HLine {
+                        self.pending = Some(Span {
                             x0,
                             x1,
                             y: self.e.ym - self.e.y,
@@ -128,12 +128,12 @@ impl Iterator for EllipseFill {
 
         if self.e.y < self.e.b {
             self.e.y += 1;
-            let h = HLine {
+            let h = Span {
                 x0: self.e.xm,
                 x1: self.e.xm,
                 y: self.e.ym + self.e.y,
             };
-            self.pending = Some(HLine {
+            self.pending = Some(Span {
                 x0: self.e.xm,
                 x1: self.e.xm,
                 y: self.e.ym - self.e.y,
@@ -341,10 +341,10 @@ impl EllipseRect {
 #[cfg_attr(docsrs, doc(cfg(feature = "fill")))]
 impl Fill for EllipseRect {
     #[inline]
-    fn fill(self) -> impl Iterator<Item = HLine> {
+    fn fill(self) -> impl Iterator<Item = Span> {
         EllipseRectFill {
             e: self,
-            pending: [HLine { x0: 0, x1: 0, y: 0 }; 2],
+            pending: [Span { x0: 0, x1: 0, y: 0 }; 2],
             pending_len: 0,
             pending_i: 0,
             open0: None,
@@ -354,27 +354,27 @@ impl Fill for EllipseRect {
     }
 }
 
-/// Iterator over [`HLine`] chords of a filled [`EllipseRect`]. Inclusive `[x0, x1]`.
+/// Iterator over [`Span`] chords of a filled [`EllipseRect`]. Inclusive `[x0, x1]`.
 #[cfg(feature = "fill")]
 pub(crate) struct EllipseRectFill {
     e: EllipseRect,
-    pending: [HLine; 2],
+    pending: [Span; 2],
     pending_len: u8,
     pending_i: u8,
-    open0: Option<HLine>,
-    open1: Option<HLine>,
+    open0: Option<Span>,
+    open1: Option<Span>,
     finished: bool,
 }
 
 #[cfg(feature = "fill")]
-fn set_track(open: &mut Option<HLine>, x0: isize, x1: isize, y: isize) -> Option<HLine> {
+fn set_track(open: &mut Option<Span>, x0: isize, x1: isize, y: isize) -> Option<Span> {
     match *open {
         None => {
-            *open = Some(HLine { x0, x1, y });
+            *open = Some(Span { x0, x1, y });
             None
         }
         Some(h) if h.y == y => {
-            *open = Some(HLine {
+            *open = Some(Span {
                 x0: h.x0.min(x0),
                 x1: h.x1.max(x1),
                 y,
@@ -382,7 +382,7 @@ fn set_track(open: &mut Option<HLine>, x0: isize, x1: isize, y: isize) -> Option
             None
         }
         Some(h) => {
-            *open = Some(HLine { x0, x1, y });
+            *open = Some(Span { x0, x1, y });
             Some(h)
         }
     }
@@ -390,7 +390,7 @@ fn set_track(open: &mut Option<HLine>, x0: isize, x1: isize, y: isize) -> Option
 
 #[cfg(feature = "fill")]
 impl EllipseRectFill {
-    fn push(&mut self, h: HLine) {
+    fn push(&mut self, h: Span) {
         self.pending[self.pending_len as usize] = h;
         self.pending_len += 1;
     }
@@ -419,7 +419,7 @@ impl EllipseRectFill {
 
 #[cfg(feature = "fill")]
 impl Iterator for EllipseRectFill {
-    type Item = HLine;
+    type Item = Span;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
@@ -628,9 +628,9 @@ mod tests {
     }
 
     #[cfg(feature = "fill")]
-    fn expand(hlines: &[crate::fill::HLine]) -> Vec<Point> {
+    fn expand(spans: &[crate::fill::Span]) -> Vec<Point> {
         let mut v = Vec::new();
-        for h in hlines {
+        for h in spans {
             for x in h.x0..=h.x1 {
                 v.push((x, h.y));
             }
@@ -639,17 +639,17 @@ mod tests {
     }
 
     #[cfg(feature = "fill")]
-    fn assert_fill_ok(hlines: &[crate::fill::HLine], outline: &[Point], label: &str) {
-        for h in hlines {
+    fn assert_fill_ok(spans: &[crate::fill::Span], outline: &[Point], label: &str) {
+        for h in spans {
             assert!(h.x0 <= h.x1, "{label} {h:?}");
         }
-        let n = hlines.len();
-        let mut ys: Vec<_> = hlines.iter().map(|h| h.y).collect();
+        let n = spans.len();
+        let mut ys: Vec<_> = spans.iter().map(|h| h.y).collect();
         ys.sort();
         ys.dedup();
-        assert_eq!(ys.len(), n, "duplicate y {label} {hlines:?}");
+        assert_eq!(ys.len(), n, "duplicate y {label} {spans:?}");
 
-        let filled = expand(hlines);
+        let filled = expand(spans);
         for p in outline {
             assert!(filled.contains(p), "outline {p:?} not in fill {label}");
         }
@@ -658,10 +658,10 @@ mod tests {
     #[cfg(feature = "fill")]
     #[test]
     fn test_ellipse_fill() {
-        use crate::fill::{Fill, HLine};
+        use crate::fill::{Fill, Span};
 
         let res: Vec<_> = Ellipse::new((0, 0), 0, 0).fill().collect();
-        assert_eq!(res, [HLine { x0: 0, x1: 0, y: 0 }]);
+        assert_eq!(res, [Span { x0: 0, x1: 0, y: 0 }]);
 
         for &(c, a, b) in &[
             ((0, 0), 0, 0),
@@ -671,19 +671,19 @@ mod tests {
             ((1, 1), 0, 5),
             ((1, 1), 5, 0),
         ] {
-            let hlines: Vec<_> = Ellipse::new(c, a, b).fill().collect();
+            let spans: Vec<_> = Ellipse::new(c, a, b).fill().collect();
             let outline: Vec<_> = Ellipse::new(c, a, b).collect();
-            assert_fill_ok(&hlines, &outline, "ellipse");
+            assert_fill_ok(&spans, &outline, "ellipse");
         }
     }
 
     #[cfg(feature = "fill")]
     #[test]
     fn test_ellipse_rect_fill() {
-        use crate::fill::{Fill, HLine};
+        use crate::fill::{Fill, Span};
 
         let res: Vec<_> = EllipseRect::new((0, 0), (0, 0)).fill().collect();
-        assert_eq!(res, [HLine { x0: 0, x1: 0, y: 0 }]);
+        assert_eq!(res, [Span { x0: 0, x1: 0, y: 0 }]);
 
         for &(p0, p1) in &[
             ((0, 0), (0, 0)),
@@ -692,9 +692,9 @@ mod tests {
             ((10, 1), (1, 8)),
             ((5, 5), (5, 12)),
         ] {
-            let hlines: Vec<_> = EllipseRect::new(p0, p1).fill().collect();
+            let spans: Vec<_> = EllipseRect::new(p0, p1).fill().collect();
             let outline: Vec<_> = EllipseRect::new(p0, p1).collect();
-            assert_fill_ok(&hlines, &outline, "ellipse_rect");
+            assert_fill_ok(&spans, &outline, "ellipse_rect");
         }
     }
 }

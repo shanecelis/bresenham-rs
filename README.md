@@ -29,18 +29,18 @@ for (x, y) in bresenham::Line::new((0, 1), (6, 4)) {
 
 ## Bresenham Variant Notes
 
-The lines are drawn on a half-open interval `[start, end)`: the `start` point is
-included, but the `end` point is not. This allows one to chain multiple lines
-together without any overdraw.
+By default lines are drawn on a half-open interval `[start, end)`: the `start`
+point is included, but the `end` point is not. This allows one to chain multiple
+lines together without any overdraw. However, one can opt-in to the "inclusive" Cargo feature to get an `line.inclusive()` iterator.
 
-This particular implementation of Bresenham breaks ties in quadrants such that a
-line drawn from `(A, B)` and from `(B, A)` will share the same points,
-neglecting their extreme points due to it being half-open.
+This particular implementation of Bresenham breaks ties in quadrants such that
+an inclusive line drawn from `(A, B)` and from `(B, A)` will cover the same
+points.
 
 ## Alois Zingl's Additions
 
 [Alois Zingl's notes](https://zingl.github.io/bresenham.html) on Bresenham were
-used to add other shapes, available as optional Cargo features.
+used to add other shapes, which are available as optional Cargo features.
 
 ## Cargo Features
 
@@ -56,11 +56,11 @@ used to add other shapes, available as optional Cargo features.
 ## Boundaries
 
 The boundaries half-open or inclusive were chosen for performance,
-composability, and ease to convert one to the other, e.g., a line may be made
-inclusive by drawing the line and then plotting its `end` argument. An inclusive
-interval may be created half-open by dropping its last element. This library
-does not provide those conveniences because they do incur a small performance
-penalty, and I am of the opinion that performance degradation should not be made
+composability, and ease to convert one to the other. Converting from half-open
+to inclusive is furnished by the `Inclusive` trait. An inclusive interval may be
+created half-open by dropping its last point; however, this library does not
+provide that convenience because it incurs a small performance penalty per step,
+and the author maintains that performance degradation should not be made
 convenient.
 
 ## Fill
@@ -72,6 +72,31 @@ and/or `ellipse`.
 
 ## Inclusive
 
-The `inclusive` Cargo feature adds `Inclusive::inclusive` on `Line` and
-`Line3d`, which returns an iterator that yields the end point making the
-interval inclusive `[start, end]` instead of half-open.
+The `inclusive` Cargo feature adds the `Inclusive` trait on `Line` and `Line3d`,
+which returns an iterator that includes the end point making the interval
+inclusive `[start, end]` instead of half-open. This approach
+follows [indubitablement2's
+work](https://github.com/indubitablement2/bresenham-rs), which is careful not
+to incur any runtime penalty.
+ 
+### Example
+
+```rust
+for (x, y) in bresenham::Line::new((0, 1), (6, 4)).inclusive() {
+    println!("{}, {}", x, y);
+}
+```
+
+```text
+(0, 1)
+(1, 1)
+(2, 2)
+(3, 2)
+(4, 3)
+(5, 3)
+(6, 4)
+```
+
+Note: `line.inclusive()` is semantically equivalent to doing `Line::new(start,
+end).chain(iter::once(end))` but it does not have any iterator chaining
+overhead.

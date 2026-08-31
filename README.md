@@ -112,4 +112,30 @@ Cargo feature to get an `line.inclusive()` iterator.
 
 This particular implementation of Bresenham breaks ties in quadrants such that
 an inclusive line drawn from `(A, B)` and from `(B, A)` will cover the same
-points.
+points. Thus lines are now symmetrical.
+
+## Why No Generics?
+
+Other Bresenham implementations use a generic type, and there are [forks of this
+project](https://github.com/nsmryan/bresenham-rs/commit/4ccd83759d92bd243f48b52be6826df252a88578)
+that switch to `i32` instead of the fixed `isize`. As an experiment, the `Line`
+was changed to be generic and benchmarked against different signed types.
+
+| Type    | half-open (horizontal) | vs `isize`   |
+|---------|------------------------|--------------|
+| `i8`    | 1.07 µs                | 1.40× slower |
+| `i16`   | 1.07 µs                | 1.40× slower |
+| `i32`   | 780 ns                 | 1.02× slower |
+| `i64`   | 766 ns                 | same         |
+| `isize` | 766 ns                 | —            |
+| `i128`  | 1.32 µs                | 1.73× slower |
+
+The types `i8` and `i16` losing to `i32` and `i64` is probably due to LLVM's
+extra extend and truncate. Unfortunately, smaller is not faster, but bigger is
+definitely slower as with `i128`. Finally `isize` is the machine-size word, so
+one can expect it will be the fastest. Based on this experiment, adding generics
+was rejected.
+
+## License
+
+This crate is licensed under the MIT License.

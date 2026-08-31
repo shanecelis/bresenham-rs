@@ -1,5 +1,3 @@
-<img width="512" height="384" alt="demo" src="https://github.com/user-attachments/assets/f24515b4-24d9-41bd-8c2b-69e0b0db6af8" />
-
 # bresenham
 
 Iterator-based
@@ -11,6 +9,9 @@ two points, without any overdraw. This crate implements the fast integer
 variant, using an iterator-based approach for flexibility. Most, if not all,
 overhead should evaporate when inlined by the compiler. It calculates
 coordinates without knowing anything about drawing methods or surfaces.
+
+<img width="256" height="192" alt="demo" src="https://github.com/user-attachments/assets/91c54fe3-9560-49fa-b77e-536f5d6dbffd" />
+
 
 ## Example
 

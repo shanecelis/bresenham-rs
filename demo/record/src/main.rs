@@ -6,7 +6,7 @@ use std::fs::File;
 use std::io::BufWriter;
 use std::path::PathBuf;
 
-const SCALE: u32 = 8;
+const SCALE: u32 = 4;
 
 fn main() {
     let out = env::args().nth(1).map(PathBuf::from).unwrap_or_else(|| {

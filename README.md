@@ -1,8 +1,9 @@
 # bresenham
+<img align="right" width="256" height="192" alt="demo" src="https://github.com/user-attachments/assets/91c54fe3-9560-49fa-b77e-536f5d6dbffd" />
 
 Iterator-based
-[Bresenham](https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm)'s line
-drawing algorithm.
+[Bresenham](https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm)'s line,
+circle, and more drawing algorithms.
 
 Bresenham's line drawing algorithm is a fast algorithm to draw a line between
 two points, without any overdraw. This crate implements the fast integer
@@ -10,7 +11,6 @@ variant, using an iterator-based approach for flexibility. Most, if not all,
 overhead should evaporate when inlined by the compiler. It calculates
 coordinates without knowing anything about drawing methods or surfaces.
 
-<img width="256" height="192" alt="demo" src="https://github.com/user-attachments/assets/91c54fe3-9560-49fa-b77e-536f5d6dbffd" />
 
 
 ## Example
@@ -88,22 +88,15 @@ follows [indubitablement2's
 work](https://github.com/indubitablement2/bresenham-rs), which is careful not
 to incur any runtime penalty.
  
-### Example
+### Inclusive Example
+
+This code will produce the same points as the first example plus `(6, 4)` at the
+end.
 
 ```rust
 for (x, y) in bresenham::Line::new((0, 1), (6, 4)).inclusive() {
     println!("({}, {})", x, y);
 }
-```
-
-```text
-(0, 1)
-(1, 1)
-(2, 2)
-(3, 2)
-(4, 3)
-(5, 3)
-(6, 4)
 ```
 
 Note: `line.inclusive()` is semantically equivalent to doing `Line::new(start,

@@ -1,3 +1,5 @@
+<img width="512" height="384" alt="demo" src="https://github.com/user-attachments/assets/f24515b4-24d9-41bd-8c2b-69e0b0db6af8" />
+
 # bresenham
 
 Iterator-based
@@ -14,7 +16,7 @@ coordinates without knowing anything about drawing methods or surfaces.
 
 ```rust
 for (x, y) in bresenham::Line::new((0, 1), (6, 4)) {
-    println!("{}, {}", x, y);
+    println!("({}, {})", x, y);
 }
 ```
 
@@ -32,8 +34,6 @@ for (x, y) in bresenham::Line::new((0, 1), (6, 4)) {
 [Alois Zingl's notes](https://zingl.github.io/bresenham.html) on Bresenham were
 used to add other shapes, which are available as optional Cargo features.
 
-<img width="512" height="384" alt="demo" src="https://github.com/user-attachments/assets/f24515b4-24d9-41bd-8c2b-69e0b0db6af8" />
-
 | Demo | Shape              | Type                         | Interval                 | Feature          |
 |------|--------------------|------------------------------|--------------------------|------------------|
 | 0    | Line               | `Line`                       | half-open `[start, end)` | `line` (default) |
@@ -44,12 +44,14 @@ used to add other shapes, which are available as optional Cargo features.
 | 5    | Anti-aliased Bézier| `QuadBezierAA`               | inclusive `[start, end]` | `aa`             |
 | 6    | Wide line          | `WideLine`                   | inclusive `[start, end]` | `aa`             |
 | 7    | Filled circle      | `Circle` + `Fill`            | scanlines                | `circle`, `fill` |
+| 8    | 3D Line            | `Line3d`                     | half-open `[start, end)` | `line3d`         |
+| 9    | Ellipse            | `Ellipse`                    | closed outline           | `ellipse`        |
 
-`Line3d` (`line3d`) and center-and-radii `Ellipse` (`ellipse`) are also available; they are not in the demo.
 
 ## Demo
 
-The WASM demo shows a 64×48 canvas that autoplays the shapes above. 
+The WASM demo shows a 64×48 canvas that autoplays the 0-7 shapes above. `Line3d`
+and center-and-radii `Ellipse` are not shown in the demo.
 
 ```sh
 cd demo
@@ -72,9 +74,9 @@ convenient.
 
 ## Fill
 
-The `fill` Cargo feature adds `Fill::fill` on `Circle`, `Ellipse`, and
-`EllipseRect`. It yields one `Span` per distinct row, from the leftmost filled
-pixel to the rightmost. Enable it together with `circle` and/or `ellipse`.
+The `fill` Cargo feature adds the `Fill` trait on `Circle`, `Ellipse`, and
+`EllipseRect`. It yields one `Span` per row to make rasterizing fill shapes more
+efficient. Enable it together with `circle` or `ellipse`.
 
 ## Inclusive
 
@@ -89,7 +91,7 @@ to incur any runtime penalty.
 
 ```rust
 for (x, y) in bresenham::Line::new((0, 1), (6, 4)).inclusive() {
-    println!("{}, {}", x, y);
+    println!("({}, {})", x, y);
 }
 ```
 
@@ -111,7 +113,8 @@ overhead.
 
 By default lines are drawn on a half-open interval `[start, end)`: the `start`
 point is included, but the `end` point is not. This allows one to chain multiple
-lines together without any overdraw. However, one can opt-in to the "inclusive" Cargo feature to get an `line.inclusive()` iterator.
+lines together without any overdraw. However, one can opt-in to the "inclusive"
+Cargo feature to get an `line.inclusive()` iterator.
 
 This particular implementation of Bresenham breaks ties in quadrants such that
 an inclusive line drawn from `(A, B)` and from `(B, A)` will cover the same

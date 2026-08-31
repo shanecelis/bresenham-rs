@@ -6,7 +6,7 @@
 /// are stored in a row-major format, but it should actually be written in
 /// whichever way goes with the locality of the image storage in cases where
 /// that is relevant.
-/// 
+///
 /// Invariant: `x0 <= x1`
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Span {

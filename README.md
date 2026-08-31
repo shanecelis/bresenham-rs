@@ -70,7 +70,7 @@ composability, and ease to convert one to the other. Converting from half-open
 to inclusive is furnished by the `Inclusive` trait. An inclusive interval may be
 created half-open by dropping its last point; however, this library does not
 provide that convenience because it incurs a small performance penalty per step,
-and the author maintains that performance degradation should not be made
+and one of the authors maintains that performance degradation should not be made
 convenient.
 
 ## Fill

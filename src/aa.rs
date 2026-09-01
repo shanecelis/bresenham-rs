@@ -45,11 +45,59 @@ pub struct LineAa {
     sx: isize,
     sy: isize,
     err: isize,
-    ed: isize,
+    ed: usize,
     pending: [PointAa; 3],
     pending_len: u8,
     pending_i: u8,
     done: bool,
+}
+
+/// An integer square root
+/// 
+/// Computes `floor(sqrt(x))` using a binary digit-by-digit square-root
+/// algorithm.
+///
+/// This is the radix-2 specialization of the traditional digit-by-digit
+/// ("longhand") square-root extraction method. Since binary root digits are
+/// either 0 or 1, each digit can be selected using only a comparison and
+/// subtraction. The radicand is processed in pairs of bits, hence the
+/// descending powers of four.
+///
+/// M. Guy, "Fast Integer Square Root by Mr. Woo's Abacus Algorithm",
+/// *University of Kent at Canterbury*, 1985.
+///
+/// The underlying digit-by-digit square-root method is much older and is
+/// generally traced to work by François Viète around 1600.
+fn isqrt(x: usize) -> usize {
+    let mut n = x;
+    let mut result: usize = 0;
+    // Start with the largest representable power of 4.
+    //
+    // usize::BITS is a power of two on normal Rust targets, so BITS - 2 is
+    // even and this gives 4^k rather than merely a power of two.
+    let mut bit: usize = 1 << (usize::BITS - 2);
+    // Find the largest power of 4 that does not exceed x. This identifies
+    // the most significant pair of input bits that can contribute to sqrt(x).
+    while bit > n {
+        bit >>= 2;
+    }
+    // Determine one binary digit of the square root per iteration.
+    while bit != 0 {
+        // `result + bit` is the trial divisor corresponding to setting the
+        // current root bit. If the remaining radicand can accommodate it,
+        // accept that bit and subtract the trial value.
+        if n >= result + bit {
+            n -= result + bit;
+            result = (result >> 1) + bit;
+        } else {
+            // The candidate bit does not fit, so this root bit is zero.
+            result >>= 1;
+        }
+
+        // Move to the next pair of input bits / next binary root digit.
+        bit >>= 2;
+    }
+    result
 }
 
 impl LineAa {

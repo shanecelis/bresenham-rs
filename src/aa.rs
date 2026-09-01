@@ -9,7 +9,7 @@ use crate::Point;
 /// A point plus its anti-alias coverage
 ///
 /// `255` is fully on; `0` is fully off.
-pub type PixelAa = (Point, u8);
+pub type PointAa = (Point, u8);
 
 fn coverage_i(zingl_fade: isize) -> u8 {
     255 - if zingl_fade < 0 {
@@ -46,7 +46,7 @@ pub struct LineAa {
     sy: isize,
     err: isize,
     ed: isize,
-    pending: [PixelAa; 3],
+    pending: [PointAa; 3],
     pending_len: u8,
     pending_i: u8,
     done: bool,
@@ -91,7 +91,7 @@ impl LineAa {
         self.pending_len += 1;
     }
 
-    fn pop_pending(&mut self) -> Option<PixelAa> {
+    fn pop_pending(&mut self) -> Option<PointAa> {
         if self.pending_i < self.pending_len {
             let p = self.pending[self.pending_i as usize];
             self.pending_i += 1;
@@ -107,7 +107,7 @@ impl LineAa {
 }
 
 impl Iterator for LineAa {
-    type Item = PixelAa;
+    type Item = PointAa;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(p) = self.pop_pending() {
@@ -219,7 +219,7 @@ impl WideLineAa {
 }
 
 impl Iterator for WideLineAa {
-    type Item = PixelAa;
+    type Item = PointAa;
 
     fn next(&mut self) -> Option<Self::Item> {
         while !self.done {
@@ -322,7 +322,7 @@ pub struct QuadBezierAa {
     dy: f64,
     err: f64,
     state: BezierAaState,
-    pending: [PixelAa; 3],
+    pending: [PointAa; 3],
     pending_len: u8,
     pending_i: u8,
 }
@@ -413,7 +413,7 @@ impl QuadBezierAa {
         self.pending_len += 1;
     }
 
-    fn pop_pending(&mut self) -> Option<PixelAa> {
+    fn pop_pending(&mut self) -> Option<PointAa> {
         if self.pending_i < self.pending_len {
             let p = self.pending[self.pending_i as usize];
             self.pending_i += 1;
@@ -471,7 +471,7 @@ impl QuadBezierAa {
 }
 
 impl Iterator for QuadBezierAa {
-    type Item = PixelAa;
+    type Item = PointAa;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {

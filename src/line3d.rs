@@ -2,7 +2,7 @@
 
 #[cfg(feature = "inclusive")]
 use crate::Inclusive;
-use crate::Point3;
+use crate::Point3d;
 
 /// 3D line-drawing iterator
 pub struct Line3d {
@@ -26,7 +26,7 @@ impl Line3d {
     /// Yields every voxel from `start` toward `end`, excluding `end`
     /// (`[start, end)`).
     #[inline]
-    pub fn new(start: Point3, end: Point3) -> Self {
+    pub fn new(start: Point3d, end: Point3d) -> Self {
         let (x0, y0, z0) = start;
         let (x1, y1, z1) = end;
         let dx = (x1 - x0).abs();
@@ -57,7 +57,7 @@ impl Line3d {
 
     /// Next voxel without checking whether we are past `end`.
     #[inline]
-    fn advance(&mut self) -> Point3 {
+    fn advance(&mut self) -> Point3d {
         let p = (self.x, self.y, self.z);
 
         self.x_err -= self.dx;
@@ -81,7 +81,7 @@ impl Line3d {
 }
 
 impl Iterator for Line3d {
-    type Item = Point3;
+    type Item = Point3d;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
@@ -99,7 +99,7 @@ struct Line3dInclusive(Line3d);
 
 #[cfg(feature = "inclusive")]
 impl Iterator for Line3dInclusive {
-    type Item = Point3;
+    type Item = Point3d;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
@@ -115,10 +115,10 @@ impl Iterator for Line3dInclusive {
 #[cfg(feature = "inclusive")]
 #[cfg_attr(docsrs, doc(cfg(feature = "inclusive")))]
 impl Inclusive for Line3d {
-    type Item = Point3;
+    type Item = Point3d;
 
     #[inline]
-    fn inclusive(self) -> impl Iterator<Item = Point3> {
+    fn inclusive(self) -> impl Iterator<Item = Point3d> {
         Line3dInclusive(self)
     }
 }

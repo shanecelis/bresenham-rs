@@ -53,4 +53,4 @@ pub type Point = (isize, isize);
 /// Convenient typedef for three machine-sized integers
 #[cfg(feature = "line3d")]
 #[cfg_attr(docsrs, doc(cfg(feature = "line3d")))]
-pub type Point3 = (isize, isize, isize);
+pub type Point3d = (isize, isize, isize);

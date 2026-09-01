@@ -4,7 +4,7 @@
 use crate::Inclusive;
 use crate::Point3;
 
-/// 3D line-drawing iterator. Half-open: yields `[start, end)`.
+/// 3D line-drawing iterator
 pub struct Line3d {
     x: isize,
     y: isize,

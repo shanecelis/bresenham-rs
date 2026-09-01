@@ -6,7 +6,9 @@
 
 use crate::Point;
 
-/// A pixel plus coverage (`255` = fully on, `0` = fully off).
+/// A point plus its anti-alias coverage
+///
+/// `255` is fully on; `0` is fully off.
 pub type PixelAa = (Point, u8);
 
 fn coverage_i(zingl_fade: isize) -> u8 {
@@ -29,7 +31,10 @@ fn coverage_f(zingl_fade: f64) -> u8 {
     }
 }
 
-/// Anti-aliased 2D line (Zingl `plotLineAA`). Inclusive: `[start, end]`.
+/// Anti-aliased 2D line
+///
+/// Inclusive: `[start, end]`.
+/// Source: Zingl `plotLineAA`
 pub struct LineAa {
     x0: isize,
     y0: isize,
@@ -157,7 +162,8 @@ enum LwPhase {
     YPerp { e2: isize, x2: isize },
 }
 
-/// Anti-aliased line of a given pixel width (Zingl `plotLineWidth`).
+/// Anti-aliased line of a given pixel width
+///
 /// Inclusive: `[start, end]`.
 pub struct WideLineAa {
     x0: isize,
@@ -295,10 +301,13 @@ enum BezierAaState {
     Done,
 }
 
-/// Anti-aliased quadratic Bézier (Zingl `plotQuadBezierSegAA`). Inclusive: `[p0, p2]`.
+/// Anti-aliased quadratic Bézier
 ///
 /// Like the C original, the gradient sign must not change along the segment;
 /// if it does, the remainder is finished with an anti-aliased line.
+///
+/// Inclusive: `[p0, p2]`
+/// Source: Zingl `plotQuadBezierSegAA`
 pub struct QuadBezierAa {
     x0: isize,
     y0: isize,

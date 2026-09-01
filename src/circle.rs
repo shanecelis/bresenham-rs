@@ -4,7 +4,7 @@
 use crate::fill::{Fill, Span};
 use crate::Point;
 
-/// Iterator over the pixels of an axis-aligned circle. Closed outline.
+/// Iterator over the pixels of an axis-aligned circle
 pub struct Circle {
     xm: isize,
     ym: isize,

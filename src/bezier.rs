@@ -154,10 +154,12 @@ impl Iterator for QuadBezierSeg {
     }
 }
 
-/// Quadratic Bézier from `p0` to `p2` with control point `p1`. Inclusive: `[p0, p2]`.
+/// Quadratic Bézier from `p0` to `p2` with control point `p1`
 ///
 /// Any control-point configuration is accepted; the curve is split at gradient
 /// sign changes the same way as Zingl's `plotQuadBezier`.
+///
+/// Inclusive: `[p0, p2]`
 pub struct QuadBezier {
     segs: [QuadBezierSeg; 3],
     n: u8,

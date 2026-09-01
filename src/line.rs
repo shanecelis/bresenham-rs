@@ -4,7 +4,9 @@
 use crate::Inclusive;
 use crate::Point;
 
-/// Line-drawing iterator. Half-open: yields `[start, end)`.
+/// Line-drawing iterator
+///
+/// Interval: Half-open, `[start, end)`
 pub struct Line {
     x: isize,
     y: isize,
@@ -15,7 +17,7 @@ pub struct Line {
     octant: Octant,
 }
 
-/// Type alias for [`Line`].
+/// Type alias for [`Line`]
 pub type Bresenham = Line;
 
 struct Octant(u8);

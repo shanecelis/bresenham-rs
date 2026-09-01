@@ -1,6 +1,6 @@
 //! Filled scanlines: one inclusive horizontal span per distinct row.
 
-/// Inclusive horizontal span `[x0, x1]` at `y`.
+/// Horizontal span from column `x0` to `x1` on row `y`
 ///
 /// A horizontal span was chosen over a vertical span because often times images
 /// are stored in a row-major format, but it should actually be written in
@@ -8,6 +8,7 @@
 /// that is relevant.
 ///
 /// Invariant: `x0 <= x1`
+/// Interval: Inclusive, `[start, end]`
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Span {
     pub x0: isize,
@@ -15,7 +16,7 @@ pub struct Span {
     pub y: isize,
 }
 
-/// A shape that can be filled as horizontal spans, one per distinct row.
+/// Fill a shape with horizontal spans.
 pub trait Fill {
     /// Inclusive `[x0, x1]` chords covering the interior.
     fn fill(self) -> impl Iterator<Item = Span>;

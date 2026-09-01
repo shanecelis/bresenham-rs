@@ -9,8 +9,7 @@ enum EllipsePhase {
     Tip { which: u8 },
 }
 
-/// Iterator over the pixels of an axis-aligned ellipse given a center and radii.
-/// Closed outline.
+/// Iterator over the pixels of an axis-aligned ellipse given a center and radii
 pub struct Ellipse {
     xm: isize,
     ym: isize,
@@ -217,7 +216,7 @@ enum RectPhase {
     Tip { which: u8 },
 }
 
-/// Iterator over an axis-aligned ellipse inscribed in a rectangle. Closed outline.
+/// Iterator over an axis-aligned ellipse inscribed in a rectangle
 pub struct EllipseRect {
     x0: isize,
     y0: isize,

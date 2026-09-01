@@ -1,6 +1,6 @@
 //! Inclusive `[start, end]` adapter for half-open line walkers.
 
-/// A half-open walker that can also yield `end`.
+/// Transform a half-open walker to an inclusive one.
 pub trait Inclusive {
     /// Point or voxel type of the walker.
     type Item;

@@ -1,7 +1,7 @@
 //! Shared autoplay scene used by the WASM demo and the GIF recorder.
 
 use bresenham::{
-    Circle, EllipseRect, Fill, Line, LineAA, Point, QuadBezier, QuadBezierAA, WideLineAA,
+    Circle, EllipseRect, Fill, Line, LineAa, Point, QuadBezier, QuadBezierAa, WideLineAa,
 };
 
 pub const WIDTH: u32 = 64;
@@ -26,12 +26,12 @@ const DIGITS: [u16; 10] = [
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Kind {
     Line,
-    LineAA,
+    LineAa,
     Circle,
     EllipseRect,
     QuadBezier,
-    QuadBezierAA,
-    WideLineAA,
+    QuadBezierAa,
+    WideLineAa,
     FillCircle,
 }
 
@@ -39,25 +39,25 @@ impl Kind {
     pub fn index(self) -> usize {
         match self {
             Kind::Line => 0,
-            Kind::LineAA => 1,
+            Kind::LineAa => 1,
             Kind::Circle => 2,
             Kind::EllipseRect => 3,
             Kind::QuadBezier => 4,
-            Kind::QuadBezierAA => 5,
-            Kind::WideLineAA => 6,
+            Kind::QuadBezierAa => 5,
+            Kind::WideLineAa => 6,
             Kind::FillCircle => 7,
         }
     }
 
     pub fn next(self) -> Self {
         match self {
-            Kind::Line => Kind::LineAA,
-            Kind::LineAA => Kind::Circle,
+            Kind::Line => Kind::LineAa,
+            Kind::LineAa => Kind::Circle,
             Kind::Circle => Kind::EllipseRect,
             Kind::EllipseRect => Kind::QuadBezier,
-            Kind::QuadBezier => Kind::QuadBezierAA,
-            Kind::QuadBezierAA => Kind::WideLineAA,
-            Kind::WideLineAA => Kind::FillCircle,
+            Kind::QuadBezier => Kind::QuadBezierAa,
+            Kind::QuadBezierAa => Kind::WideLineAa,
+            Kind::WideLineAa => Kind::FillCircle,
             Kind::FillCircle => Kind::Line,
         }
     }
@@ -95,7 +95,7 @@ impl Scene {
                 ((8, 38), (58, 12)),
                 ((12, 24), (56, 24)),
             ][i],
-            Kind::LineAA => [
+            Kind::LineAa => [
                 ((8, 36), (58, 14)),
                 ((10, 12), (54, 40)),
                 ((12, 32), (56, 16)),
@@ -115,12 +115,12 @@ impl Scene {
                 ((10, 12), (54, 40)),
                 ((8, 40), (58, 14)),
             ][i],
-            Kind::QuadBezierAA => [
+            Kind::QuadBezierAa => [
                 ((8, 14), (58, 14)),
                 ((10, 40), (54, 12)),
                 ((8, 38), (58, 20)),
             ][i],
-            Kind::WideLineAA => [
+            Kind::WideLineAa => [
                 ((10, 16), (54, 36)),
                 ((10, 36), (54, 14)),
                 ((12, 22), (56, 28)),
@@ -145,7 +145,7 @@ impl Scene {
         let end = self.end;
         match self.kind {
             Kind::Line => Line::new(start, end).map(|p| (p, 255)).collect(),
-            Kind::LineAA => LineAA::new(start, end).filter(|(_, c)| *c > 0).collect(),
+            Kind::LineAa => LineAa::new(start, end).filter(|(_, c)| *c > 0).collect(),
             Kind::Circle => Circle::new(start, Self::radius(start, end))
                 .map(|p| (p, 255))
                 .collect(),
@@ -154,13 +154,13 @@ impl Scene {
                 let c = Self::control_point(start, end);
                 QuadBezier::new(start, c, end).map(|p| (p, 255)).collect()
             }
-            Kind::QuadBezierAA => {
+            Kind::QuadBezierAa => {
                 let c = Self::control_point(start, end);
-                QuadBezierAA::new(start, c, end)
+                QuadBezierAa::new(start, c, end)
                     .filter(|(_, c)| *c > 0)
                     .collect()
             }
-            Kind::WideLineAA => WideLineAA::new(start, end, 3.0)
+            Kind::WideLineAa => WideLineAa::new(start, end, 3.0)
                 .filter(|(_, c)| *c > 0)
                 .collect(),
             Kind::FillCircle => Circle::new(start, Self::radius(start, end))

@@ -7,7 +7,7 @@
 use crate::Point;
 
 /// A pixel plus coverage (`255` = fully on, `0` = fully off).
-pub type AaPixel = (Point, u8);
+pub type PixelAa = (Point, u8);
 
 fn coverage_i(zingl_fade: isize) -> u8 {
     255 - if zingl_fade < 0 {
@@ -30,7 +30,7 @@ fn coverage_f(zingl_fade: f64) -> u8 {
 }
 
 /// Anti-aliased 2D line (Zingl `plotLineAA`). Inclusive: `[start, end]`.
-pub struct LineAA {
+pub struct LineAa {
     x0: isize,
     y0: isize,
     x1: isize,
@@ -41,13 +41,13 @@ pub struct LineAA {
     sy: isize,
     err: isize,
     ed: isize,
-    pending: [AaPixel; 3],
+    pending: [PixelAa; 3],
     pending_len: u8,
     pending_i: u8,
     done: bool,
 }
 
-impl LineAA {
+impl LineAa {
     /// Inclusive anti-aliased line (`[start, end]`).
     pub fn new(start: Point, end: Point) -> Self {
         let (x0, y0) = start;
@@ -63,7 +63,7 @@ impl LineAA {
         };
         let ed = if ed == 0 { 1 } else { ed };
 
-        LineAA {
+        LineAa {
             x0,
             y0,
             x1,
@@ -86,7 +86,7 @@ impl LineAA {
         self.pending_len += 1;
     }
 
-    fn pop_pending(&mut self) -> Option<AaPixel> {
+    fn pop_pending(&mut self) -> Option<PixelAa> {
         if self.pending_i < self.pending_len {
             let p = self.pending[self.pending_i as usize];
             self.pending_i += 1;
@@ -101,8 +101,8 @@ impl LineAA {
     }
 }
 
-impl Iterator for LineAA {
-    type Item = AaPixel;
+impl Iterator for LineAa {
+    type Item = PixelAa;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(p) = self.pop_pending() {
@@ -159,7 +159,7 @@ enum LwPhase {
 
 /// Anti-aliased line of a given pixel width (Zingl `plotLineWidth`).
 /// Inclusive: `[start, end]`.
-pub struct WideLineAA {
+pub struct WideLineAa {
     x0: isize,
     y0: isize,
     x1: isize,
@@ -175,7 +175,7 @@ pub struct WideLineAA {
     done: bool,
 }
 
-impl WideLineAA {
+impl WideLineAa {
     /// Inclusive anti-aliased line (`[start, end]`) with width `wd`.
     pub fn new(start: Point, end: Point, wd: f32) -> Self {
         let (x0, y0) = start;
@@ -190,7 +190,7 @@ impl WideLineAA {
             libm::sqrt((dx * dx + dy * dy) as f64)
         };
 
-        WideLineAA {
+        WideLineAa {
             x0,
             y0,
             x1,
@@ -212,8 +212,8 @@ impl WideLineAA {
     }
 }
 
-impl Iterator for WideLineAA {
-    type Item = AaPixel;
+impl Iterator for WideLineAa {
+    type Item = PixelAa;
 
     fn next(&mut self) -> Option<Self::Item> {
         while !self.done {
@@ -291,7 +291,7 @@ impl Iterator for WideLineAA {
 
 enum BezierAaState {
     Curve,
-    Line(LineAA),
+    Line(LineAa),
     Done,
 }
 
@@ -299,7 +299,7 @@ enum BezierAaState {
 ///
 /// Like the C original, the gradient sign must not change along the segment;
 /// if it does, the remainder is finished with an anti-aliased line.
-pub struct QuadBezierAA {
+pub struct QuadBezierAa {
     x0: isize,
     y0: isize,
     x2: isize,
@@ -313,12 +313,12 @@ pub struct QuadBezierAA {
     dy: f64,
     err: f64,
     state: BezierAaState,
-    pending: [AaPixel; 3],
+    pending: [PixelAa; 3],
     pending_len: u8,
     pending_i: u8,
 }
 
-impl QuadBezierAA {
+impl QuadBezierAa {
     /// Inclusive quadratic Bézier (`[p0, p2]`) with control point `p1`.
     pub fn new(p0: Point, p1: Point, p2: Point) -> Self {
         let (mut x0, mut y0) = p0;
@@ -359,7 +359,7 @@ impl QuadBezierAA {
             xx += xx;
             yy += yy;
             let err = dx + dy + xy as f64;
-            return QuadBezierAA {
+            return QuadBezierAa {
                 x0,
                 y0,
                 x2,
@@ -379,7 +379,7 @@ impl QuadBezierAA {
             };
         }
 
-        QuadBezierAA {
+        QuadBezierAa {
             x0,
             y0,
             x2,
@@ -392,7 +392,7 @@ impl QuadBezierAA {
             dx: 0.0,
             dy: 0.0,
             err: 0.0,
-            state: BezierAaState::Line(LineAA::new((x0, y0), (x2, y2))),
+            state: BezierAaState::Line(LineAa::new((x0, y0), (x2, y2))),
             pending: [((0, 0), 0); 3],
             pending_len: 0,
             pending_i: 0,
@@ -404,7 +404,7 @@ impl QuadBezierAA {
         self.pending_len += 1;
     }
 
-    fn pop_pending(&mut self) -> Option<AaPixel> {
+    fn pop_pending(&mut self) -> Option<PixelAa> {
         if self.pending_i < self.pending_len {
             let p = self.pending[self.pending_i as usize];
             self.pending_i += 1;
@@ -426,7 +426,7 @@ impl QuadBezierAA {
         self.push((self.x0, self.y0), fade);
 
         if self.x0 == self.x2 || self.y0 == self.y2 {
-            self.state = BezierAaState::Line(LineAA::new((self.x0, self.y0), (self.x2, self.y2)));
+            self.state = BezierAaState::Line(LineAa::new((self.x0, self.y0), (self.x2, self.y2)));
             return;
         }
 
@@ -456,13 +456,13 @@ impl QuadBezierAA {
         }
 
         if !(self.dy < self.dx) {
-            self.state = BezierAaState::Line(LineAA::new((self.x0, self.y0), (self.x2, self.y2)));
+            self.state = BezierAaState::Line(LineAa::new((self.x0, self.y0), (self.x2, self.y2)));
         }
     }
 }
 
-impl Iterator for QuadBezierAA {
-    type Item = AaPixel;
+impl Iterator for QuadBezierAa {
+    type Item = PixelAa;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -485,12 +485,12 @@ impl Iterator for QuadBezierAA {
 
 #[cfg(test)]
 mod tests {
-    use super::{LineAA, QuadBezierAA, WideLineAA};
+    use super::{LineAa, QuadBezierAa, WideLineAa};
     use std::vec::Vec;
 
     #[test]
     fn test_line_aa() {
-        let res: Vec<_> = LineAA::new((0, 0), (4, 0)).collect();
+        let res: Vec<_> = LineAa::new((0, 0), (4, 0)).collect();
         assert_eq!(
             res,
             [
@@ -502,7 +502,7 @@ mod tests {
             ]
         );
 
-        let res: Vec<_> = LineAA::new((0, 1), (6, 4)).collect();
+        let res: Vec<_> = LineAa::new((0, 1), (6, 4)).collect();
         assert_eq!(
             res,
             [
@@ -519,7 +519,7 @@ mod tests {
             ]
         );
 
-        let res: Vec<_> = LineAA::new((0, 0), (3, 3)).collect();
+        let res: Vec<_> = LineAa::new((0, 0), (3, 3)).collect();
         assert_eq!(
             res,
             [
@@ -539,7 +539,7 @@ mod tests {
 
     #[test]
     fn test_wide_line() {
-        let res: Vec<_> = WideLineAA::new((0, 0), (4, 0), 1.0).collect();
+        let res: Vec<_> = WideLineAa::new((0, 0), (4, 0), 1.0).collect();
         assert_eq!(
             res,
             [
@@ -551,7 +551,7 @@ mod tests {
             ]
         );
 
-        let res: Vec<_> = WideLineAA::new((0, 0), (5, 2), 3.0).collect();
+        let res: Vec<_> = WideLineAa::new((0, 0), (5, 2), 3.0).collect();
         assert_eq!(
             res,
             [
@@ -583,7 +583,7 @@ mod tests {
 
     #[test]
     fn test_quad_bezier_aa() {
-        let res: Vec<_> = QuadBezierAA::new((0, 0), (1, 3), (4, 3)).collect();
+        let res: Vec<_> = QuadBezierAa::new((0, 0), (1, 3), (4, 3)).collect();
         assert_eq!(
             res,
             [

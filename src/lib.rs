@@ -24,7 +24,7 @@ mod line3d;
 
 #[cfg(feature = "aa")]
 #[cfg_attr(docsrs, doc(cfg(feature = "aa")))]
-pub use aa::{AaPixel, LineAA, QuadBezierAA, WideLineAA};
+pub use aa::{LineAa, PixelAa, QuadBezierAa, WideLineAa};
 #[cfg(feature = "bezier")]
 #[cfg_attr(docsrs, doc(cfg(feature = "bezier")))]
 pub use bezier::QuadBezier;

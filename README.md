@@ -38,12 +38,12 @@ used to add other shapes, which are available as optional Cargo features.
 | Demo | Shape              | Type                         | Interval                 | Feature          |
 |------|--------------------|------------------------------|--------------------------|------------------|
 | 0    | Line               | `Line`                       | half-open `[start, end)` | `line` (default) |
-| 1    | Anti-aliased line  | `LineAA`                     | inclusive `[start, end]` | `aa`             |
+| 1    | Anti-aliased line  | `LineAa`                     | inclusive `[start, end]` | `aa`             |
 | 2    | Circle             | `Circle`                     | closed outline           | `circle`         |
 | 3    | Ellipse            | `EllipseRect`                | closed outline           | `ellipse`        |
 | 4    | Quadratic Bézier   | `QuadBezier`                 | inclusive `[start, end]` | `bezier`         |
-| 5    | Anti-aliased Bézier| `QuadBezierAA`               | inclusive `[start, end]` | `aa`             |
-| 6    | Wide line          | `WideLineAA`                 | inclusive `[start, end]` | `aa`             |
+| 5    | Anti-aliased Bézier| `QuadBezierAa`               | inclusive `[start, end]` | `aa`             |
+| 6    | Wide line          | `WideLineAa`                 | inclusive `[start, end]` | `aa`             |
 | 7    | Filled circle      | `Circle` + `Fill`            | scanlines                | `circle`, `fill` |
 | 8    | 3D Line            | `Line3d`                     | half-open `[start, end)` | `line3d`         |
 | 9    | Ellipse            | `Ellipse`                    | closed outline           | `ellipse`        |

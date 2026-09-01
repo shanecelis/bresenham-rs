@@ -94,6 +94,8 @@ This code will produce the same points as the first example plus `(6, 4)` at the
 end.
 
 ```rust
+# use bresenham::Inclusive;
+
 for (x, y) in bresenham::Line::new((0, 1), (6, 4)).inclusive() {
     println!("({}, {})", x, y);
 }
@@ -135,6 +137,36 @@ extra extend and truncate. Unfortunately, smaller is not faster, but bigger is
 definitely slower as with `i128`. Finally `isize` is the machine-size word, so
 one can expect it will be the fastest. Based on this experiment, adding generics
 was rejected.
+
+## References
+
+- J. E. Bresenham, ["Algorithm for computer control of a
+  digital plotter"](https://doi.org/10.1147/sj.41.0025), *IBM Systems Journal*,
+  4(1):25–30, 1965.
+  [PDF](https://github.com/shanecelis/bresenham-rs/raw/feat/add-circle-and-more/doc/papers/bresenham-1965-line.pdf) `Line`
+- J. Bresenham, ["A linear algorithm for incremental digital display of circular
+  arcs"](https://doi.org/10.1145/359423.359432), *Communications of the ACM*,
+  20(2):100–106, 1977.
+  [PDF](https://github.com/shanecelis/bresenham-rs/raw/feat/add-circle-and-more/doc/papers/bresenham-1977-circle.pdf) `Circle`
+- M. L. V. Pitteway, ["Algorithm for drawing ellipses or hyperbolae with a
+  digital plotter"](https://doi.org/10.1093/comjnl/10.3.282), *The Computer
+  Journal*, 10(3):282–289, 1967.
+  [PDF](https://github.com/shanecelis/bresenham-rs/raw/feat/add-circle-and-more/doc/papers/pitteway-1967-ellipse.pdf) `Ellipse` `EllipseRect`
+- M. L. V. Pitteway and D. J. Watkinson, ["Bresenham's algorithm with Grey
+  scale"](https://doi.org/10.1145/359024.359027), *Communications of the ACM*,
+  23(11):625–626, 1980.
+  [PDF](https://github.com/shanecelis/bresenham-rs/raw/feat/add-circle-and-more/doc/papers/pitteway-watkinson-1980-grey-scale.pdf) `LineAa`
+- A. S. Murphy, ["Line Thickening by Modification to Bresenham's
+  Algorithm"](http://homepages.enterprise.net/murphy/thickline/index.html),
+  *IBM Technical Disclosure Bulletin*, 20(12):5358–5366, 1978.
+  [PDF](https://github.com/shanecelis/bresenham-rs/raw/feat/add-circle-and-more/doc/papers/murphy-1978-thickline.pdf) `WideLineAa`
+- A. E. Kaufman and E. Shimony, ["3D scan-conversion algorithms for voxel-based
+  graphics"](https://doi.org/10.1145/319120.319126), *Proceedings of the 1986
+  Workshop on Interactive 3D Graphics*, 45–75, 1986.
+  [PDF](https://github.com/shanecelis/bresenham-rs/raw/feat/add-circle-and-more/doc/papers/kaufman-shimony-1986-3d-scan-conversion.pdf) `Line3d`
+- A. Zingl, ["A Rasterizing Algorithm for Drawing
+  Curves"](https://zingl.github.io/Bresenham.pdf), Technikum Wien, 2012.
+  [PDF](https://github.com/shanecelis/bresenham-rs/raw/feat/add-circle-and-more/doc/papers/zingl-2012-rasterizing-curves.pdf) `QuadBezier` `QuadBezierAa`
 
 ## License
 

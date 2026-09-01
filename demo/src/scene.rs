@@ -1,7 +1,7 @@
 //! Shared autoplay scene used by the WASM demo and the GIF recorder.
 
 use bresenham::{
-    Circle, EllipseRect, Fill, Line, LineAA, Point, QuadBezier, QuadBezierAA, WideLine,
+    Circle, EllipseRect, Fill, Line, LineAA, Point, QuadBezier, QuadBezierAA, WideLineAA,
 };
 
 pub const WIDTH: u32 = 64;
@@ -31,7 +31,7 @@ pub enum Kind {
     EllipseRect,
     QuadBezier,
     QuadBezierAA,
-    WideLine,
+    WideLineAA,
     FillCircle,
 }
 
@@ -44,7 +44,7 @@ impl Kind {
             Kind::EllipseRect => 3,
             Kind::QuadBezier => 4,
             Kind::QuadBezierAA => 5,
-            Kind::WideLine => 6,
+            Kind::WideLineAA => 6,
             Kind::FillCircle => 7,
         }
     }
@@ -56,8 +56,8 @@ impl Kind {
             Kind::Circle => Kind::EllipseRect,
             Kind::EllipseRect => Kind::QuadBezier,
             Kind::QuadBezier => Kind::QuadBezierAA,
-            Kind::QuadBezierAA => Kind::WideLine,
-            Kind::WideLine => Kind::FillCircle,
+            Kind::QuadBezierAA => Kind::WideLineAA,
+            Kind::WideLineAA => Kind::FillCircle,
             Kind::FillCircle => Kind::Line,
         }
     }
@@ -120,7 +120,7 @@ impl Scene {
                 ((10, 40), (54, 12)),
                 ((8, 38), (58, 20)),
             ][i],
-            Kind::WideLine => [
+            Kind::WideLineAA => [
                 ((10, 16), (54, 36)),
                 ((10, 36), (54, 14)),
                 ((12, 22), (56, 28)),
@@ -160,7 +160,7 @@ impl Scene {
                     .filter(|(_, c)| *c > 0)
                     .collect()
             }
-            Kind::WideLine => WideLine::new(start, end, 3.0)
+            Kind::WideLineAA => WideLineAA::new(start, end, 3.0)
                 .filter(|(_, c)| *c > 0)
                 .collect(),
             Kind::FillCircle => Circle::new(start, Self::radius(start, end))

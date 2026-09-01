@@ -43,7 +43,7 @@ used to add other shapes, which are available as optional Cargo features.
 | 3    | Ellipse            | `EllipseRect`                | closed outline           | `ellipse`        |
 | 4    | Quadratic Bézier   | `QuadBezier`                 | inclusive `[start, end]` | `bezier`         |
 | 5    | Anti-aliased Bézier| `QuadBezierAA`               | inclusive `[start, end]` | `aa`             |
-| 6    | Wide line          | `WideLine`                   | inclusive `[start, end]` | `aa`             |
+| 6    | Wide line          | `WideLineAA`                 | inclusive `[start, end]` | `aa`             |
 | 7    | Filled circle      | `Circle` + `Fill`            | scanlines                | `circle`, `fill` |
 | 8    | 3D Line            | `Line3d`                     | half-open `[start, end)` | `line3d`         |
 | 9    | Ellipse            | `Ellipse`                    | closed outline           | `ellipse`        |

@@ -542,8 +542,80 @@ impl Iterator for QuadBezierAa {
 
 #[cfg(test)]
 mod tests {
-    use super::{LineAa, QuadBezierAa, WideLineAa};
+    use super::{isqrt, LineAa, QuadBezierAa, WideLineAa};
     use std::vec::Vec;
+
+    fn libm_floor_sqrt(x: usize) -> usize {
+        libm::sqrt(x as f64) as usize
+    }
+
+    /// `libm::sqrt(x as f64) as isize` is exact only while `x` is an integer
+    /// `f64` can represent (every integer through 2^53).
+    fn f64_preserves(x: usize) -> bool {
+        x as f64 as usize == x
+    }
+
+    #[test]
+    fn isqrt_matches_libm_small_values() {
+        for x in 0usize..=10_000 {
+            assert_eq!(isqrt(x), libm_floor_sqrt(x), "x = {x}");
+        }
+    }
+
+    #[test]
+    fn isqrt_matches_libm_around_perfect_squares() {
+        for n in 0usize..=1 << 16 {
+            let Some(square) = n.checked_mul(n) else {
+                break;
+            };
+            assert_eq!(isqrt(square), n, "sqrt({n}^2)");
+            assert_eq!(isqrt(square), libm_floor_sqrt(square), "x = {square}");
+            if square > 0 {
+                assert_eq!(isqrt(square - 1), n - 1, "sqrt({n}^2 - 1)");
+                assert_eq!(
+                    isqrt(square - 1),
+                    libm_floor_sqrt(square - 1),
+                    "x = {square} - 1"
+                );
+            }
+            if let Some(above) = square.checked_add(1) {
+                if f64_preserves(above) {
+                    let expected = if n == 0 { 1 } else { n };
+                    assert_eq!(isqrt(above), expected, "sqrt({n}^2 + 1)");
+                    assert_eq!(isqrt(above), libm_floor_sqrt(above), "x = {above}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn isqrt_matches_libm_line_length_inputs() {
+        // LineAa / WideLineAa pass `dx * dx + dy * dy` to `libm::sqrt`.
+        for dx in 0isize..=256 {
+            for dy in 0isize..=256 {
+                let x = (dx * dx + dy * dy) as usize;
+                assert_eq!(isqrt(x), libm_floor_sqrt(x), "dx = {dx}, dy = {dy}");
+            }
+        }
+    }
+
+    #[test]
+    fn isqrt_matches_libm_where_f64_is_exact() {
+        for shift in [20u32, 24, 31, 32, 40, 52, 53] {
+            if shift >= usize::BITS {
+                continue;
+            }
+            for x in [(1usize << shift) - 1, 1 << shift] {
+                if !f64_preserves(x) {
+                    continue;
+                }
+                assert_eq!(isqrt(x), libm_floor_sqrt(x), "x = {x}");
+                if x > 0 {
+                    assert_eq!(isqrt(x - 1), libm_floor_sqrt(x - 1), "x = {x} - 1");
+                }
+            }
+        }
+    }
 
     #[test]
     fn test_line_aa() {

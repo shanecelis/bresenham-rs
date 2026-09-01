@@ -53,6 +53,8 @@ impl WideLineAa {
         let ed = if dx + dy == 0 {
             1.0
         } else {
+            // Look for the [core::f64::math::sqrt] to become stable so you can
+            // remove this.
             libm::sqrt((dx * dx + dy * dy) as f64)
         };
 

@@ -30,8 +30,10 @@ fill = []
 inclusive = []
 ## Quadratic Bézier (`QuadBezier`); implies `line`
 bezier = ["line", "dep:libm"]
-## Anti-aliased line, thick line, and quadratic Bézier (`LineAa`, `WideLineAa`, `QuadBezierAa`)
+## Anti-aliased line and quadratic Bézier (`LineAa`, `QuadBezierAa`)
 aa = []
+## Anti-aliased thick line (`WideLineAa`)
+wide-line = ["dep:libm"]
 
 [package.metadata.docs.rs]
 all-features = true

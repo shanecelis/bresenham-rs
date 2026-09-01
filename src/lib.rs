@@ -21,10 +21,15 @@ mod inclusive;
 mod line;
 #[cfg(feature = "line3d")]
 mod line3d;
+#[cfg(feature = "wide-line")]
+mod wide_line;
 
 #[cfg(feature = "aa")]
 #[cfg_attr(docsrs, doc(cfg(feature = "aa")))]
-pub use aa::{LineAa, PointAa, QuadBezierAa, WideLineAa};
+pub use aa::{LineAa, QuadBezierAa};
+#[cfg(feature = "wide-line")]
+#[cfg_attr(docsrs, doc(cfg(feature = "wide-line")))]
+pub use wide_line::WideLineAa;
 #[cfg(feature = "bezier")]
 #[cfg_attr(docsrs, doc(cfg(feature = "bezier")))]
 pub use bezier::QuadBezier;
@@ -49,6 +54,13 @@ pub use line3d::Line3d;
 
 /// Convenient typedef for two machine-sized integers
 pub type Point = (isize, isize);
+
+/// A point plus its anti-alias coverage
+///
+/// `255` is fully on; `0` is fully off.
+#[cfg(any(feature = "aa", feature = "wide-line"))]
+#[cfg_attr(docsrs, doc(cfg(any(feature = "aa", feature = "wide-line"))))]
+pub type PointAa = (Point, u8);
 
 /// Convenient typedef for three machine-sized integers
 #[cfg(feature = "line3d")]

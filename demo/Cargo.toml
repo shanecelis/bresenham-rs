@@ -11,6 +11,7 @@ bresenham = { path = "..", default-features = false, features = [
     "ellipse",
     "bezier",
     "aa",
+    "wide-line",
     "fill",
 ] }
 wasm-bindgen = { version = "0.2", default-features = false }

@@ -143,30 +143,30 @@ was rejected.
 - J. E. Bresenham, ["Algorithm for computer control of a
   digital plotter"](https://doi.org/10.1147/sj.41.0025), *IBM Systems Journal*,
   4(1):25–30, 1965.
-  [PDF](https://github.com/shanecelis/bresenham-rs/raw/feat/add-circle-and-more/doc/papers/bresenham-1965-line.pdf) `Line`
+  <a href="https://cdn.jsdelivr.net/gh/shanecelis/bresenham-rs@feat/add-circle-and-more/doc/papers/bresenham-1965-line.pdf" target="_blank" rel="noopener noreferrer">PDF</a> `Line`
 - J. Bresenham, ["A linear algorithm for incremental digital display of circular
   arcs"](https://doi.org/10.1145/359423.359432), *Communications of the ACM*,
   20(2):100–106, 1977.
-  [PDF](https://github.com/shanecelis/bresenham-rs/raw/feat/add-circle-and-more/doc/papers/bresenham-1977-circle.pdf) `Circle`
+  <a href="https://cdn.jsdelivr.net/gh/shanecelis/bresenham-rs@feat/add-circle-and-more/doc/papers/bresenham-1977-circle.pdf" target="_blank" rel="noopener noreferrer">PDF</a> `Circle`
 - M. L. V. Pitteway, ["Algorithm for drawing ellipses or hyperbolae with a
   digital plotter"](https://doi.org/10.1093/comjnl/10.3.282), *The Computer
   Journal*, 10(3):282–289, 1967.
-  [PDF](https://github.com/shanecelis/bresenham-rs/raw/feat/add-circle-and-more/doc/papers/pitteway-1967-ellipse.pdf) `Ellipse` `EllipseRect`
+  <a href="https://cdn.jsdelivr.net/gh/shanecelis/bresenham-rs@feat/add-circle-and-more/doc/papers/pitteway-1967-ellipse.pdf" target="_blank" rel="noopener noreferrer">PDF</a> `Ellipse` `EllipseRect`
 - M. L. V. Pitteway and D. J. Watkinson, ["Bresenham's algorithm with Grey
   scale"](https://doi.org/10.1145/359024.359027), *Communications of the ACM*,
   23(11):625–626, 1980.
-  [PDF](https://github.com/shanecelis/bresenham-rs/raw/feat/add-circle-and-more/doc/papers/pitteway-watkinson-1980-grey-scale.pdf) `LineAa`
+  <a href="https://cdn.jsdelivr.net/gh/shanecelis/bresenham-rs@feat/add-circle-and-more/doc/papers/pitteway-watkinson-1980-grey-scale.pdf" target="_blank" rel="noopener noreferrer">PDF</a> `LineAa`
 - A. S. Murphy, ["Line Thickening by Modification to Bresenham's
   Algorithm"](http://homepages.enterprise.net/murphy/thickline/index.html),
   *IBM Technical Disclosure Bulletin*, 20(12):5358–5366, 1978.
-  [PDF](https://github.com/shanecelis/bresenham-rs/raw/feat/add-circle-and-more/doc/papers/murphy-1978-thickline.pdf) `WideLineAa`
+  <a href="https://cdn.jsdelivr.net/gh/shanecelis/bresenham-rs@feat/add-circle-and-more/doc/papers/murphy-1978-thickline.pdf" target="_blank" rel="noopener noreferrer">PDF</a> `WideLineAa`
 - A. E. Kaufman and E. Shimony, ["3D scan-conversion algorithms for voxel-based
   graphics"](https://doi.org/10.1145/319120.319126), *Proceedings of the 1986
   Workshop on Interactive 3D Graphics*, 45–75, 1986.
-  [PDF](https://github.com/shanecelis/bresenham-rs/raw/feat/add-circle-and-more/doc/papers/kaufman-shimony-1986-3d-scan-conversion.pdf) `Line3d`
+  <a href="https://cdn.jsdelivr.net/gh/shanecelis/bresenham-rs@feat/add-circle-and-more/doc/papers/kaufman-shimony-1986-3d-scan-conversion.pdf" target="_blank" rel="noopener noreferrer">PDF</a> `Line3d`
 - A. Zingl, ["A Rasterizing Algorithm for Drawing
   Curves"](https://zingl.github.io/Bresenham.pdf), Technikum Wien, 2012.
-  [PDF](https://github.com/shanecelis/bresenham-rs/raw/feat/add-circle-and-more/doc/papers/zingl-2012-rasterizing-curves.pdf) `QuadBezier` `QuadBezierAa`
+  <a href="https://cdn.jsdelivr.net/gh/shanecelis/bresenham-rs@feat/add-circle-and-more/doc/papers/zingl-2012-rasterizing-curves.pdf" target="_blank" rel="noopener noreferrer">PDF</a> `QuadBezier` `QuadBezierAa`
 
 ## License
 

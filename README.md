@@ -32,21 +32,22 @@ for (x, y) in bresenham::Line::new((0, 1), (6, 4)) {
 
 ## Shapes
 
-[Alois Zingl's notes](https://zingl.github.io/bresenham.html) on Bresenham were
-used to add other shapes, which are available as optional Cargo features.
+Bresenham published algorithms for lines and circles. And a number of other
+shapes were generalized from his work (see references below), which are
+available as optional Cargo features.
 
-| Demo | Shape              | Type                         | Interval                 | Feature          |
-|------|--------------------|------------------------------|--------------------------|------------------|
-| 0    | Line               | `Line`                       | half-open `[start, end)` | `line` (default) |
-| 1    | Anti-aliased line  | `LineAa`                     | inclusive `[start, end]` | `aa`             |
-| 2    | Circle             | `Circle`                     | closed outline           | `circle`         |
-| 3    | Ellipse            | `EllipseRect`                | closed outline           | `ellipse`        |
-| 4    | Quadratic Bézier   | `QuadBezier`                 | inclusive `[start, end]` | `bezier`         |
-| 5    | Anti-aliased Bézier| `QuadBezierAa`               | inclusive `[start, end]` | `aa`             |
-| 6    | Wide line          | `WideLineAa`                 | inclusive `[start, end]` | `wide-line`      |
-| 7    | Filled circle      | `Circle` + `Fill`            | scanlines                | `circle`, `fill` |
-| 8    | 3D Line            | `Line3d`                     | half-open `[start, end)` | `line3d`         |
-| 9    | Ellipse            | `Ellipse`                    | closed outline           | `ellipse`        |
+| Demo | Shape               | Type              | Author    | Feature          |
+|------|---------------------|-------------------|-----------|------------------|
+| 0    | Line                | `Line`            | Bresenham | `line` (default) |
+| 1    | Anti-aliased line   | `LineAa`          | Pitteway  | `aa`             |
+| 2    | Circle              | `Circle`          | Bresenham | `circle`         |
+| 3    | Ellipse             | `EllipseRect`     | Pitteway  | `ellipse`        |
+| 4    | Quadratic Bézier    | `QuadBezier`      | Zingl     | `bezier`         |
+| 5    | Anti-aliased Bézier | `QuadBezierAa`    | Zingl     | `aa`             |
+| 6    | Wide line           | `WideLineAa`      | Murphy    | `wide-line`      |
+| 7    | Filled circle       | `Circle` + `Fill` | Bresenham | `circle`, `fill` |
+| 8    | 3D Line             | `Line3d`          | Kaufman   | `line3d`         |
+| 9    | Ellipse             | `Ellipse`         | Pitteway  | `ellipse`        |
 
 
 ## Demo
@@ -93,7 +94,7 @@ to incur any runtime penalty.
 This code will produce the same points as the first example plus `(6, 4)` at the
 end.
 
-```rust
+```rust,ignore
 # use bresenham::Inclusive;
 
 for (x, y) in bresenham::Line::new((0, 1), (6, 4)).inclusive() {
@@ -110,11 +111,11 @@ overhead.
 By default lines are drawn on a half-open interval `[start, end)`: the `start`
 point is included, but the `end` point is not. This allows one to chain multiple
 lines together without any overdraw. However, one can opt-in to the "inclusive"
-Cargo feature to get an `line.inclusive()` iterator.
+Cargo feature described above.
 
 This particular implementation of Bresenham breaks ties in quadrants such that
 an inclusive line drawn from `(A, B)` and from `(B, A)` will cover the same
-points. Thus lines are now symmetrical.
+points. Thus lines are symmetrical.
 
 ## Why No Generics?
 

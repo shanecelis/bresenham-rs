@@ -48,6 +48,7 @@ available as optional Cargo features.
 | 7    | Filled circle       | `Circle` + `Fill` | Bresenham | `circle`, `fill` |
 | 8    | 3D Line             | `Line3d`          | Kaufman   | `line3d`         |
 | 9    | Ellipse             | `Ellipse`         | Pitteway  | `ellipse`        |
+| 10   | Anti-aliased circle | `CircleAa`        | Fu        | `circle-aa`      |
 
 
 ## Demo
@@ -168,6 +169,10 @@ was rejected.
 - A. Zingl, ["A Rasterizing Algorithm for Drawing
   Curves"](https://zingl.github.io/Bresenham.pdf), Technikum Wien, 2012.
   <a href="https://cdn.jsdelivr.net/gh/shanecelis/bresenham-rs@feat/add-circle-and-more/doc/papers/zingl-2012-rasterizing-curves.pdf" target="_blank" rel="noopener noreferrer">PDF</a> `QuadBezier` `QuadBezierAa`
+- B. Fu and L. Niu, ["Integral Algorithm for Generating Anti-Aliasing Circle
+  Based on Bresenham Algorithm"](https://doi.org/10.4028/www.scientific.net/AMR.490-495.1202),
+  *Advanced Materials Research*, 490–495:1202–1206, 2012.
+  <a href="https://cdn.jsdelivr.net/gh/shanecelis/bresenham-rs@feat/add-circle-and-more/doc/papers/fu-niu-2012-antialiasing-circle.pdf" target="_blank" rel="noopener noreferrer">PDF</a> `CircleAa`
 
 ## License
 

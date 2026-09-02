@@ -11,6 +11,8 @@ mod aa;
 mod bezier;
 #[cfg(feature = "circle")]
 mod circle;
+#[cfg(feature = "circle-aa")]
+mod circle_aa;
 #[cfg(feature = "ellipse")]
 mod ellipse;
 #[cfg(feature = "fill")]
@@ -27,6 +29,9 @@ mod wide_line;
 #[cfg(feature = "aa")]
 #[cfg_attr(docsrs, doc(cfg(feature = "aa")))]
 pub use aa::{LineAa, QuadBezierAa};
+#[cfg(feature = "circle-aa")]
+#[cfg_attr(docsrs, doc(cfg(feature = "circle-aa")))]
+pub use circle_aa::CircleAa;
 #[cfg(feature = "wide-line")]
 #[cfg_attr(docsrs, doc(cfg(feature = "wide-line")))]
 pub use wide_line::WideLineAa;
@@ -58,8 +63,11 @@ pub type Point = (isize, isize);
 /// A point plus its anti-alias coverage
 ///
 /// `255` is fully on; `0` is fully off.
-#[cfg(any(feature = "aa", feature = "wide-line"))]
-#[cfg_attr(docsrs, doc(cfg(any(feature = "aa", feature = "wide-line"))))]
+#[cfg(any(feature = "aa", feature = "circle-aa", feature = "wide-line"))]
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(feature = "aa", feature = "circle-aa", feature = "wide-line")))
+)]
 pub type PointAa = (Point, u8);
 
 /// Convenient typedef for three machine-sized integers

@@ -215,6 +215,10 @@ impl Iterator for QuadBezierAa {
 #[cfg(test)]
 mod tests {
     use super::QuadBezierAa;
+    use crate::QuadBezier;
+    use crate::Point;
+    use std::fs;
+    use std::path::PathBuf;
     use std::vec::Vec;
 
     #[test]
@@ -238,5 +242,154 @@ mod tests {
                 ((4, 3), 255)
             ]
         );
+    }
+
+    /// `QuadBezier` follows the true arc. `QuadBezierAa` is a single-segment
+    /// walker that switches to a straight `LineAa` as soon as it hits the
+    /// axis-aligned box of the current endpoints (`x == x2` or `y == y2`).
+    /// When those endpoints share an axis — the usual “arch” — that happens
+    /// on the first pixel, so the bulge is never drawn.
+    #[test]
+    fn test_quad_bezier_aa_follows_aliased_arch() {
+        let p0 = (0, 20);
+        let p1 = (20, 2);
+        let p2 = (40, 20);
+
+        let aliased: Vec<Point> = QuadBezier::new(p0, p1, p2).collect();
+        let aa: Vec<(Point, u8)> = QuadBezierAa::new(p0, p1, p2)
+            .filter(|(_, c)| *c > 0)
+            .collect();
+
+        let path = write_comparison_ppm("quad_bezier_aa_gap.ppm", p0, p1, p2, &aliased, &aa);
+        std::eprintln!("wrote comparison image to {}", path.display());
+
+        let missing: Vec<Point> = aliased
+            .iter()
+            .copied()
+            .filter(|&p| !aa_covers(p, &aa))
+            .collect();
+
+        assert!(
+            missing.is_empty(),
+            "QuadBezierAa dropped {} aliased pixels (e.g. {:?}); see {}",
+            missing.len(),
+            missing.first(),
+            path.display()
+        );
+    }
+
+    fn aa_covers(p: Point, aa: &[(Point, u8)]) -> bool {
+        aa.iter().any(|&((x, y), c)| {
+            c > 0 && (x - p.0).abs() <= 1 && (y - p.1).abs() <= 1
+        })
+    }
+
+    fn write_comparison_ppm(
+        name: &str,
+        p0: Point,
+        p1: Point,
+        p2: Point,
+        aliased: &[Point],
+        aa: &[(Point, u8)],
+    ) -> PathBuf {
+        let pad = 3;
+        let xs = aliased
+            .iter()
+            .map(|p| p.0)
+            .chain(aa.iter().map(|p| p.0 .0))
+            .chain([p0.0, p1.0, p2.0]);
+        let ys = aliased
+            .iter()
+            .map(|p| p.1)
+            .chain(aa.iter().map(|p| p.0 .1))
+            .chain([p0.1, p1.1, p2.1]);
+        let min_x = xs.clone().min().unwrap() - pad;
+        let max_x = xs.max().unwrap() + pad;
+        let min_y = ys.clone().min().unwrap() - pad;
+        let max_y = ys.max().unwrap() + pad;
+        let w = (max_x - min_x + 1) as usize;
+        let h = (max_y - min_y + 1) as usize;
+
+        // Three panels: aliased | anti-aliased | overlay
+        // overlay: green = both, red = aliased only, blue = AA only
+        let panel = w + 1;
+        let img_w = panel * 3 - 1;
+        let scale = 8usize;
+        let mut pix = std::vec![24u8; img_w * h * 3];
+
+        let put = |buf: &mut [u8], px: usize, py: usize, r: u8, g: u8, b: u8| {
+            if px < img_w && py < h {
+                let i = (py * img_w + px) * 3;
+                buf[i] = r;
+                buf[i + 1] = g;
+                buf[i + 2] = b;
+            }
+        };
+
+        let to_xy = |p: Point| ((p.0 - min_x) as usize, (p.1 - min_y) as usize);
+
+        for y in 0..h {
+            put(&mut pix, w, y, 48, 48, 48);
+            put(&mut pix, panel + w, y, 48, 48, 48);
+        }
+
+        for &p in aliased {
+            let (x, y) = to_xy(p);
+            put(&mut pix, x, y, 255, 255, 255);
+            put(&mut pix, panel * 2 + x, y, 220, 40, 40);
+        }
+        for &(p, c) in aa {
+            let (x, y) = to_xy(p);
+            put(&mut pix, panel + x, y, c, c, c);
+            let i = (y * img_w + (panel * 2 + x)) * 3;
+            if i + 2 < pix.len() {
+                if pix[i] == 220 && pix[i + 1] == 40 {
+                    pix[i] = 40;
+                    pix[i + 1] = 200;
+                    pix[i + 2] = 40;
+                } else {
+                    pix[i] = 60;
+                    pix[i + 1] = 120;
+                    pix[i + 2] = 255;
+                }
+            }
+        }
+        for p in [p0, p2] {
+            let (x, y) = to_xy(p);
+            put(&mut pix, x, y, 255, 200, 0);
+            put(&mut pix, panel + x, y, 255, 200, 0);
+            put(&mut pix, panel * 2 + x, y, 255, 200, 0);
+        }
+        let (cx, cy) = to_xy(p1);
+        put(&mut pix, cx, cy, 255, 140, 0);
+        put(&mut pix, panel + cx, cy, 255, 140, 0);
+        put(&mut pix, panel * 2 + cx, cy, 255, 140, 0);
+
+        let sw = img_w * scale;
+        let sh = h * scale;
+        let mut scaled = std::vec![0u8; sw * sh * 3];
+        for y in 0..h {
+            for x in 0..img_w {
+                let i = (y * img_w + x) * 3;
+                let (r, g, b) = (pix[i], pix[i + 1], pix[i + 2]);
+                for dy in 0..scale {
+                    for dx in 0..scale {
+                        let j = ((y * scale + dy) * sw + (x * scale + dx)) * 3;
+                        scaled[j] = r;
+                        scaled[j + 1] = g;
+                        scaled[j + 2] = b;
+                    }
+                }
+            }
+        }
+        let mut out = Vec::new();
+        out.extend_from_slice(std::format!("P6\n{sw} {sh}\n255\n").as_bytes());
+        out.extend_from_slice(&scaled);
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("target")
+            .join(name);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(&path, out).unwrap();
+        path
     }
 }

@@ -176,9 +176,10 @@ impl Scene {
             Kind::WideLineAa => WideLineAa::new(start, end, 3.0)
                 .filter(|(_, c)| *c > 0)
                 .collect(),
-            Kind::FillCircle => {
-                Self::expand_plots(Circle::new(start, Self::radius(start, end)).fill())
-            }
+            Kind::FillCircle => Circle::new(start, Self::radius(start, end))
+                .fill()
+                .flat_map(|h| (h.x0..=h.x1).map(move |x| ((x, h.y), 255)))
+                .collect(),
             Kind::FillCircleAa => {
                 Self::expand_plots(CircleAa::new(start, Self::radius(start, end)).fill())
             }

@@ -1,7 +1,7 @@
 //! Midpoint circle from Alois Zingl's `plotCircle`.
 
 #[cfg(feature = "fill")]
-use crate::fill::{Fill, Plot, Span};
+use crate::fill::{Fill, Span};
 use crate::Point;
 
 /// Iterator over the pixels of an axis-aligned circle
@@ -95,7 +95,7 @@ impl Circle {
 #[cfg_attr(docsrs, doc(cfg(feature = "fill")))]
 impl Fill for Circle {
     #[inline]
-    fn fill(self) -> impl Iterator<Item = Plot> {
+    fn fill(self) -> impl Iterator<Item = Span> {
         CircleFill {
             c: self,
             pending: [Span { x0: 0, x1: 0, y: 0 }; 4],
@@ -109,7 +109,6 @@ impl Fill for Circle {
             open_mx: None,
             finished: false,
         }
-        .map(Plot::Span)
     }
 }
 
@@ -381,24 +380,15 @@ mod tests {
         v
     }
 
-    #[cfg(feature = "fill")]
-    fn spans(c: Circle) -> Vec<crate::fill::Span> {
-        use crate::fill::{Fill, Plot};
-        c.fill()
-            .map(|p| match p {
-                Plot::Span(h) => h,
-                Plot::Point(q) => panic!("aliased fill yielded point {q:?}"),
-            })
-            .collect()
-    }
-
     /// The filled `r = 3` circle rendered onto an 8x8 one-bit grid: one row
     /// per byte, most significant bit is the leftmost column.
     #[cfg(feature = "fill")]
     #[test]
     fn test_circle_fill_shape() {
+        use crate::fill::Fill;
+
         let mut grid = [0u8; 8];
-        for h in spans(Circle::new((3, 3), 3)) {
+        for h in Circle::new((3, 3), 3).fill() {
             assert!(
                 (0..8).contains(&h.y) && h.x0 >= 0 && h.x1 < 8,
                 "{h:?} off grid"
@@ -425,13 +415,13 @@ mod tests {
     #[cfg(feature = "fill")]
     #[test]
     fn test_circle_fill() {
-        use crate::fill::Span;
+        use crate::fill::{Fill, Span};
 
-        let res = spans(Circle::new((0, 0), 0));
+        let res: Vec<_> = Circle::new((0, 0), 0).fill().collect();
         assert_eq!(res, [Span { x0: 0, x1: 0, y: 0 }]);
 
         for r in 0..16 {
-            let spans = spans(Circle::new((3, -2), r));
+            let spans: Vec<_> = Circle::new((3, -2), r).fill().collect();
 
             for h in &spans {
                 assert!(h.x0 <= h.x1, "r={r} {h:?}");

@@ -80,11 +80,11 @@ convenient.
 ## Fill
 
 The `fill` Cargo feature adds the `Fill` trait on `Circle`, `CircleAa`,
-`Ellipse`, and `EllipseRect`. It yields `Plot` items: a solid `Span` per
-interior row, plus `Point`s carrying coverage for anti-aliased edge pixels.
-Aliased shapes yield only `Span`s; `CircleAa` mixes spans with an anti-aliased
-rim (Vadillo's integer algorithm). Enable it together with `circle`,
-`circle-aa`, or `ellipse`.
+`Ellipse`, and `EllipseRect`. The trait is generic on its iterator item and
+defaults to `Span`: one solid inclusive `[x0, x1]` chord per distinct row.
+`CircleAa` implements `Fill<Plot>` and mixes those spans with `Point`s
+carrying anti-aliased rim coverage (Vadillo's integer algorithm). Enable it
+together with `circle`, `circle-aa`, or `ellipse`.
 
 ## Inclusive
 

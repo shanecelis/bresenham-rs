@@ -20,8 +20,9 @@ pub struct Span {
 
 /// One fill instruction: a solid row or an anti-aliased edge pixel
 ///
-/// Aliased shapes yield only [`Plot::Span`]. Anti-aliased shapes mix solid
-/// spans for the interior with [`Plot::Point`]s carrying edge coverage.
+/// Anti-aliased fills yield a mix of solid [`Span`]s and [`Point`]s carrying
+/// edge coverage. Aliased fills yield [`Span`] directly via [`Fill`]'s
+/// default item type.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Plot {
     /// A single pixel with anti-alias coverage (`255` fully on).
@@ -30,9 +31,12 @@ pub enum Plot {
     Span(Span),
 }
 
-/// Fill a shape with horizontal spans and edge points.
-pub trait Fill {
-    /// [`Plot`] instructions covering the interior: `Span`s for solid rows,
-    /// `Point`s for anti-aliased edges.
-    fn fill(self) -> impl Iterator<Item = Plot>;
+/// Fill a shape with horizontal spans (and, for anti-aliased shapes, edge
+/// points).
+///
+/// The iterator item defaults to [`Span`]. Anti-aliased fills implement
+/// `Fill<Plot>` instead.
+pub trait Fill<Item = Span> {
+    /// Instructions covering the interior.
+    fn fill(self) -> impl Iterator<Item = Item>;
 }

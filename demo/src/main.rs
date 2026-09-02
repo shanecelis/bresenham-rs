@@ -14,8 +14,16 @@ struct Demo {
     ctx: CanvasRenderingContext2d,
     canvas: HtmlCanvasElement,
     scene: Scene,
-    dragging: bool,
+    drag: Drag,
+    awaiting_control: bool,
     mode: Mode,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Drag {
+    None,
+    Chord,
+    Control,
 }
 
 enum Mode {
@@ -35,7 +43,8 @@ impl Demo {
             ctx,
             canvas,
             scene: Scene::new(),
-            dragging: false,
+            drag: Drag::None,
+            awaiting_control: false,
             mode: Mode::Auto { step: 0, hold: 0 },
         };
         demo.present()?;
@@ -43,6 +52,7 @@ impl Demo {
     }
 
     fn present(&mut self) -> Result<(), JsValue> {
+        self.scene.plot_control();
         self.scene.stamp_digit();
         let image = ImageData::new_with_u8_clamped_array_and_sh(
             Clamped(&mut self.scene.buf),
@@ -63,7 +73,8 @@ impl Demo {
     }
 
     fn begin_auto(&mut self) -> Result<(), JsValue> {
-        self.dragging = false;
+        self.drag = Drag::None;
+        self.awaiting_control = false;
         self.scene.load_shape();
         self.mode = Mode::Auto { step: 0, hold: 0 };
         self.scene.clear();
@@ -110,7 +121,7 @@ impl Demo {
                 self.present()
             }
             Mode::Click { idle } => {
-                if !self.dragging {
+                if self.drag == Drag::None {
                     let idle = idle + 1;
                     if idle >= IDLE_RESUME_FRAMES {
                         self.begin_auto()?;
@@ -146,25 +157,47 @@ impl Demo {
             return Ok(());
         }
         self.mode = Mode::Click { idle: 0 };
-        self.dragging = true;
         let p = self.grid_xy(event);
-        self.scene.start = p;
-        self.scene.end = p;
+        if self.scene.kind.is_bezier()
+            && (self.awaiting_control || self.scene.near_control(p))
+        {
+            self.drag = Drag::Control;
+            self.awaiting_control = false;
+            self.scene.control = p;
+        } else {
+            self.drag = Drag::Chord;
+            self.awaiting_control = false;
+            self.scene.start = p;
+            self.scene.end = p;
+            self.scene.reset_control();
+        }
         self.paint_shape()
     }
 
     fn on_move(&mut self, event: &MouseEvent) -> Result<(), JsValue> {
-        if !self.dragging {
+        if self.drag == Drag::None {
             return Ok(());
         }
         if event.buttons() & 1 == 0 {
             return self.finish_drag(event);
         }
         let p = self.grid_xy(event);
-        if p == self.scene.end {
-            return Ok(());
+        match self.drag {
+            Drag::None => return Ok(()),
+            Drag::Chord => {
+                if p == self.scene.end {
+                    return Ok(());
+                }
+                self.scene.end = p;
+                self.scene.reset_control();
+            }
+            Drag::Control => {
+                if p == self.scene.control {
+                    return Ok(());
+                }
+                self.scene.control = p;
+            }
         }
-        self.scene.end = p;
         self.paint_shape()
     }
 
@@ -176,20 +209,36 @@ impl Demo {
     }
 
     fn finish_drag(&mut self, event: &MouseEvent) -> Result<(), JsValue> {
-        if !self.dragging {
+        if self.drag == Drag::None {
             return Ok(());
         }
-        self.dragging = false;
-        self.scene.end = self.grid_xy(event);
+        let p = self.grid_xy(event);
+        match self.drag {
+            Drag::Chord => {
+                self.scene.end = p;
+                self.scene.reset_control();
+                self.awaiting_control = self.scene.kind.is_bezier();
+            }
+            Drag::Control => {
+                self.scene.control = p;
+                self.awaiting_control = false;
+            }
+            Drag::None => {}
+        }
+        self.drag = Drag::None;
         self.mode = Mode::Click { idle: 0 };
         self.paint_shape()
     }
 
     fn on_right(&mut self) -> Result<(), JsValue> {
-        if self.dragging {
+        if self.drag != Drag::None {
             return Ok(());
         }
+        self.awaiting_control = false;
         self.scene.next_kind();
+        if self.scene.kind.is_bezier() {
+            self.scene.reset_control();
+        }
         self.mode = Mode::Click { idle: 0 };
         self.paint_shape()
     }

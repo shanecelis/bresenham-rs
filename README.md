@@ -41,19 +41,19 @@ available as optional Cargo features.
 | 0    | Line                | `Line`            | Bresenham | `line` (default) |
 | 1    | Anti-aliased line   | `LineAa`          | Pitteway  | `line`, `aa`     |
 | 2    | Circle              | `Circle`          | Bresenham | `circle`         |
-| 3    | Ellipse             | `EllipseRect`     | Pitteway  | `ellipse`        |
-| 4    | Quadratic Bézier    | `QuadBezier`      | Zingl     | `bezier`         |
-| 5    | Anti-aliased Bézier | `QuadBezierAa`    | Zingl     | `bezier`, `aa`   |
-| 6    | Wide line           | `WideLineAa`      | Murphy    | `wide-line`      |
-| 7    | Filled circle       | `Circle` + `Fill` | Bresenham | `circle`, `fill` |
-| 8    | 3D Line             | `Line3d`          | Kaufman   | `line3d`         |
-| 9    | Ellipse             | `Ellipse`         | Pitteway  | `ellipse`        |
-| 10   | Anti-aliased circle | `CircleAa`        | Fu        | `circle-aa`      |
+| 3    | Anti-aliased circle | `CircleAa`        | Fu        | `circle-aa`      |
+| 4    | Ellipse             | `EllipseRect`     | Pitteway  | `ellipse`        |
+| 5    | Quadratic Bézier    | `QuadBezier`      | Zingl     | `bezier`         |
+| 6    | Anti-aliased Bézier | `QuadBezierAa`    | Zingl     | `bezier`, `aa`   |
+| 7    | Wide line           | `WideLineAa`      | Murphy    | `wide-line`      |
+| 8    | Filled circle       | `Circle` + `Fill` | Bresenham | `circle`, `fill` |
+| 9    | 3D Line             | `Line3d`          | Kaufman   | `line3d`         |
+| 10   | Ellipse             | `Ellipse`         | Pitteway  | `ellipse`        |
 
 
 ## Demo
 
-The WASM demo shows a 64×48 canvas that autoplays the 0-7 shapes above. `Line3d`
+The WASM demo shows a 64×48 canvas that autoplays the 0-8 shapes above. `Line3d`
 and center-and-radii `Ellipse` are not shown in the demo.
 
 ```sh
@@ -61,9 +61,10 @@ cd demo
 trunk serve; # Open the URL trunk prints.
 ```
 
-Left-drag draws the current shape between two points. Right-click stops autoplay
-and advances to the next shape. After a few seconds of inactivity, autoplay
-resumes.
+Left-drag draws the current shape between two points. On a Bézier, a second
+drag moves the orange control point; later drags near that handle move it
+again. Right-click stops autoplay and advances to the next shape. After a few
+seconds of inactivity, autoplay resumes.
 
 ## Boundaries
 

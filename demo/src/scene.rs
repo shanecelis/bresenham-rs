@@ -1,7 +1,8 @@
 //! Shared autoplay scene used by the WASM demo and the GIF recorder.
 
 use bresenham::{
-    Circle, EllipseRect, Fill, Line, LineAa, Point, QuadBezier, QuadBezierAa, WideLineAa,
+    Circle, CircleAa, EllipseRect, Fill, Line, LineAa, Point, QuadBezier, QuadBezierAa,
+    WideLineAa,
 };
 
 pub const WIDTH: u32 = 64;
@@ -28,6 +29,7 @@ pub enum Kind {
     Line,
     LineAa,
     Circle,
+    CircleAa,
     EllipseRect,
     QuadBezier,
     QuadBezierAa,
@@ -41,11 +43,12 @@ impl Kind {
             Kind::Line => 0,
             Kind::LineAa => 1,
             Kind::Circle => 2,
-            Kind::EllipseRect => 3,
-            Kind::QuadBezier => 4,
-            Kind::QuadBezierAa => 5,
-            Kind::WideLineAa => 6,
-            Kind::FillCircle => 7,
+            Kind::CircleAa => 3,
+            Kind::EllipseRect => 4,
+            Kind::QuadBezier => 5,
+            Kind::QuadBezierAa => 6,
+            Kind::WideLineAa => 7,
+            Kind::FillCircle => 8,
         }
     }
 
@@ -53,7 +56,8 @@ impl Kind {
         match self {
             Kind::Line => Kind::LineAa,
             Kind::LineAa => Kind::Circle,
-            Kind::Circle => Kind::EllipseRect,
+            Kind::Circle => Kind::CircleAa,
+            Kind::CircleAa => Kind::EllipseRect,
             Kind::EllipseRect => Kind::QuadBezier,
             Kind::QuadBezier => Kind::QuadBezierAa,
             Kind::QuadBezierAa => Kind::WideLineAa,
@@ -61,12 +65,17 @@ impl Kind {
             Kind::FillCircle => Kind::Line,
         }
     }
+
+    pub fn is_bezier(self) -> bool {
+        matches!(self, Kind::QuadBezier | Kind::QuadBezierAa)
+    }
 }
 
 pub struct Scene {
     pub buf: Vec<u8>,
     pub start: Point,
     pub end: Point,
+    pub control: Point,
     pub kind: Kind,
     pub pixels: Vec<(Point, u8)>,
     pub tour: u32,
@@ -78,6 +87,7 @@ impl Scene {
             buf: vec![0; (WIDTH * HEIGHT * 4) as usize],
             start: (4, 8),
             end: (59, 39),
+            control: (0, 0),
             kind: Kind::Line,
             pixels: Vec::new(),
             tour: 0,
@@ -100,7 +110,7 @@ impl Scene {
                 ((10, 12), (54, 40)),
                 ((12, 32), (56, 16)),
             ][i],
-            Kind::Circle => [
+            Kind::Circle | Kind::CircleAa => [
                 ((32, 26), (46, 26)),
                 ((28, 28), (40, 28)),
                 ((36, 24), (48, 24)),
@@ -137,6 +147,7 @@ impl Scene {
         let (start, end) = Self::geometry(self.kind, self.tour);
         self.start = start;
         self.end = end;
+        self.reset_control();
         self.pixels = self.collect_pixels();
     }
 
@@ -149,17 +160,16 @@ impl Scene {
             Kind::Circle => Circle::new(start, Self::radius(start, end))
                 .map(|p| (p, 255))
                 .collect(),
+            Kind::CircleAa => CircleAa::new(start, Self::radius(start, end))
+                .filter(|(_, c)| *c > 0)
+                .collect(),
             Kind::EllipseRect => EllipseRect::new(start, end).map(|p| (p, 255)).collect(),
-            Kind::QuadBezier => {
-                let c = Self::control_point(start, end);
-                QuadBezier::new(start, c, end).map(|p| (p, 255)).collect()
-            }
-            Kind::QuadBezierAa => {
-                let c = Self::control_point(start, end);
-                QuadBezierAa::new(start, c, end)
-                    .filter(|(_, c)| *c > 0)
-                    .collect()
-            }
+            Kind::QuadBezier => QuadBezier::new(start, self.control, end)
+                .map(|p| (p, 255))
+                .collect(),
+            Kind::QuadBezierAa => QuadBezierAa::new(start, self.control, end)
+                .filter(|(_, c)| *c > 0)
+                .collect(),
             Kind::WideLineAa => WideLineAa::new(start, end, 3.0)
                 .filter(|(_, c)| *c > 0)
                 .collect(),
@@ -174,6 +184,24 @@ impl Scene {
         let (x0, y0) = start;
         let (x1, y1) = end;
         ((x0 + x1) / 2 - (y1 - y0) / 3, (y0 + y1) / 2 + (x1 - x0) / 3)
+    }
+
+    pub fn reset_control(&mut self) {
+        self.control = Self::control_point(self.start, self.end);
+    }
+
+    pub fn near_control(&self, p: Point) -> bool {
+        (p.0 - self.control.0).abs() <= 2 && (p.1 - self.control.1).abs() <= 2
+    }
+
+    pub fn plot_control(&mut self) {
+        if !self.kind.is_bezier() {
+            return;
+        }
+        let (x, y) = self.control;
+        for p in [(x, y), (x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)] {
+            self.plot(p, 255, 140, 0);
+        }
     }
 
     pub fn radius(start: Point, end: Point) -> isize {
@@ -245,12 +273,12 @@ impl Scene {
     }
 }
 
-/// One autoplay tour (kinds 0–7). Each entry is a unique canvas and a GIF delay
+/// One autoplay tour (kinds 0–8). Each entry is a unique canvas and a GIF delay
 /// in hundredths of a second.
 pub fn autoplay_frames() -> Vec<(Vec<u8>, u16)> {
     let mut scene = Scene::new();
     let mut frames = Vec::new();
-    for kind_i in 0..8 {
+    for kind_i in 0..9 {
         let mut step = 0usize;
         loop {
             if scene.pixels.is_empty() {
@@ -268,6 +296,7 @@ pub fn autoplay_frames() -> Vec<(Vec<u8>, u16)> {
                 scene.plot(p, c, c, c);
             }
             step = end;
+            scene.plot_control();
             scene.stamp_digit();
             let done = step >= scene.pixels.len();
             let delay = if done {
@@ -280,7 +309,7 @@ pub fn autoplay_frames() -> Vec<(Vec<u8>, u16)> {
                 break;
             }
         }
-        if kind_i + 1 < 8 {
+        if kind_i + 1 < 9 {
             scene.advance_kind();
         }
     }

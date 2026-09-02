@@ -1,4 +1,6 @@
-//! Filled scanlines: one inclusive horizontal span per distinct row.
+//! Filled scanlines: solid horizontal spans plus anti-aliased edge points.
+
+use crate::PointAa;
 
 /// Horizontal span from column `x0` to `x1` on row `y`
 ///
@@ -16,8 +18,21 @@ pub struct Span {
     pub y: isize,
 }
 
-/// Fill a shape with horizontal spans.
+/// One fill instruction: a solid row or an anti-aliased edge pixel
+///
+/// Aliased shapes yield only [`Plot::Span`]. Anti-aliased shapes mix solid
+/// spans for the interior with [`Plot::Point`]s carrying edge coverage.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Plot {
+    /// A single pixel with anti-alias coverage (`255` fully on).
+    Point(PointAa),
+    /// A fully covered inclusive `[x0, x1]` run on one row.
+    Span(Span),
+}
+
+/// Fill a shape with horizontal spans and edge points.
 pub trait Fill {
-    /// Inclusive `[x0, x1]` chords covering the interior.
-    fn fill(self) -> impl Iterator<Item = Span>;
+    /// [`Plot`] instructions covering the interior: `Span`s for solid rows,
+    /// `Point`s for anti-aliased edges.
+    fn fill(self) -> impl Iterator<Item = Plot>;
 }

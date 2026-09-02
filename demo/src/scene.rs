@@ -1,7 +1,7 @@
 //! Shared autoplay scene used by the WASM demo and the GIF recorder.
 
 use bresenham::{
-    Circle, CircleAa, EllipseRect, Fill, Line, LineAa, Point, QuadBezier, QuadBezierAa,
+    Circle, CircleAa, EllipseRect, Fill, Line, LineAa, Plot, Point, QuadBezier, QuadBezierAa,
     WideLineAa,
 };
 
@@ -35,6 +35,7 @@ pub enum Kind {
     QuadBezierAa,
     WideLineAa,
     FillCircle,
+    FillCircleAa,
 }
 
 impl Kind {
@@ -49,6 +50,7 @@ impl Kind {
             Kind::QuadBezierAa => 6,
             Kind::WideLineAa => 7,
             Kind::FillCircle => 8,
+            Kind::FillCircleAa => 9,
         }
     }
 
@@ -62,7 +64,8 @@ impl Kind {
             Kind::QuadBezier => Kind::QuadBezierAa,
             Kind::QuadBezierAa => Kind::WideLineAa,
             Kind::WideLineAa => Kind::FillCircle,
-            Kind::FillCircle => Kind::Line,
+            Kind::FillCircle => Kind::FillCircleAa,
+            Kind::FillCircleAa => Kind::Line,
         }
     }
 
@@ -135,7 +138,7 @@ impl Scene {
                 ((10, 36), (54, 14)),
                 ((12, 22), (56, 28)),
             ][i],
-            Kind::FillCircle => [
+            Kind::FillCircle | Kind::FillCircleAa => [
                 ((32, 26), (42, 26)),
                 ((28, 28), (37, 28)),
                 ((36, 24), (45, 24)),
@@ -173,11 +176,28 @@ impl Scene {
             Kind::WideLineAa => WideLineAa::new(start, end, 3.0)
                 .filter(|(_, c)| *c > 0)
                 .collect(),
-            Kind::FillCircle => Circle::new(start, Self::radius(start, end))
-                .fill()
-                .flat_map(|h| (h.x0..=h.x1).map(move |x| ((x, h.y), 255)))
-                .collect(),
+            Kind::FillCircle => {
+                Self::expand_plots(Circle::new(start, Self::radius(start, end)).fill())
+            }
+            Kind::FillCircleAa => {
+                Self::expand_plots(CircleAa::new(start, Self::radius(start, end)).fill())
+            }
         }
+    }
+
+    fn expand_plots(plots: impl Iterator<Item = Plot>) -> Vec<(Point, u8)> {
+        let mut pixels = Vec::new();
+        for plot in plots {
+            match plot {
+                Plot::Span(h) => pixels.extend((h.x0..=h.x1).map(|x| ((x, h.y), 255))),
+                Plot::Point((p, c)) => {
+                    if c > 0 {
+                        pixels.push((p, c));
+                    }
+                }
+            }
+        }
+        pixels
     }
 
     pub fn control_point(start: Point, end: Point) -> Point {
@@ -273,12 +293,12 @@ impl Scene {
     }
 }
 
-/// One autoplay tour (kinds 0–8). Each entry is a unique canvas and a GIF delay
+/// One autoplay tour (kinds 0–9). Each entry is a unique canvas and a GIF delay
 /// in hundredths of a second.
 pub fn autoplay_frames() -> Vec<(Vec<u8>, u16)> {
     let mut scene = Scene::new();
     let mut frames = Vec::new();
-    for kind_i in 0..9 {
+    for kind_i in 0..10 {
         let mut step = 0usize;
         loop {
             if scene.pixels.is_empty() {
@@ -309,7 +329,7 @@ pub fn autoplay_frames() -> Vec<(Vec<u8>, u16)> {
                 break;
             }
         }
-        if kind_i + 1 < 9 {
+        if kind_i + 1 < 10 {
             scene.advance_kind();
         }
     }

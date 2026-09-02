@@ -51,7 +51,7 @@ pub use circle::Circle;
 pub use ellipse::{Ellipse, EllipseRect};
 #[cfg(feature = "fill")]
 #[cfg_attr(docsrs, doc(cfg(feature = "fill")))]
-pub use fill::{Fill, Span};
+pub use fill::{Fill, Plot, Span};
 #[cfg(feature = "inclusive")]
 #[cfg_attr(docsrs, doc(cfg(feature = "inclusive")))]
 pub use inclusive::Inclusive;
@@ -68,19 +68,6 @@ pub type Point = (isize, isize);
 /// A point plus its anti-alias coverage
 ///
 /// `255` is fully on; `0` is fully off.
-#[cfg(any(
-    all(feature = "aa", feature = "line"),
-    feature = "circle-aa",
-    feature = "wide-line"
-))]
-#[cfg_attr(
-    docsrs,
-    doc(cfg(any(
-        all(feature = "aa", feature = "line"),
-        feature = "circle-aa",
-        feature = "wide-line"
-    )))
-)]
 pub type PointAa = (Point, u8);
 
 /// Convenient typedef for three machine-sized integers

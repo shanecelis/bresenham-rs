@@ -47,13 +47,14 @@ available as optional Cargo features.
 | 6    | Anti-aliased Bézier | `QuadBezierAa`    | Zingl     | `bezier`, `aa`   |
 | 7    | Wide line           | `WideLineAa`      | Murphy    | `wide-line`      |
 | 8    | Filled circle       | `Circle` + `Fill` | Bresenham | `circle`, `fill` |
-| 9    | 3D Line             | `Line3d`          | Kaufman   | `line3d`         |
-| 10   | Ellipse             | `Ellipse`         | Pitteway  | `ellipse`        |
+| 9    | Filled AA circle    | `CircleAa` + `Fill` | Vadillo | `circle-aa`, `fill` |
+| 10   | 3D Line             | `Line3d`          | Kaufman   | `line3d`         |
+| 11   | Ellipse             | `Ellipse`         | Pitteway  | `ellipse`        |
 
 
 ## Demo
 
-The WASM demo shows a 64×48 canvas that autoplays the 0-8 shapes above. `Line3d`
+The WASM demo shows a 64×48 canvas that autoplays the 0-9 shapes above. `Line3d`
 and center-and-radii `Ellipse` are not shown in the demo.
 
 ```sh
@@ -78,9 +79,12 @@ convenient.
 
 ## Fill
 
-The `fill` Cargo feature adds the `Fill` trait on `Circle`, `Ellipse`, and
-`EllipseRect`. It yields one `Span` per row to make rasterizing fill shapes more
-efficient. Enable it together with `circle` or `ellipse`.
+The `fill` Cargo feature adds the `Fill` trait on `Circle`, `CircleAa`,
+`Ellipse`, and `EllipseRect`. It yields `Plot` items: a solid `Span` per
+interior row, plus `Point`s carrying coverage for anti-aliased edge pixels.
+Aliased shapes yield only `Span`s; `CircleAa` mixes spans with an anti-aliased
+rim (Vadillo's integer algorithm). Enable it together with `circle`,
+`circle-aa`, or `ellipse`.
 
 ## Inclusive
 
@@ -97,7 +101,7 @@ This code will produce the same points as the first example plus `(6, 4)` at the
 end.
 
 ```rust,ignore
-# use bresenham::Inclusive;
+use bresenham::Inclusive;
 
 for (x, y) in bresenham::Line::new((0, 1), (6, 4)).inclusive() {
     println!("({}, {})", x, y);
@@ -174,6 +178,10 @@ was rejected.
   Based on Bresenham Algorithm"](https://doi.org/10.4028/www.scientific.net/AMR.490-495.1202),
   *Advanced Materials Research*, 490–495:1202–1206, 2012.
   <a href="https://cdn.jsdelivr.net/gh/shanecelis/bresenham-rs@feat/add-circle-and-more/doc/papers/fu-niu-2012-antialiasing-circle.pdf" target="_blank" rel="noopener noreferrer">PDF</a> `CircleAa`
+- J. R. Vadillo, ["A novel technique to draw antialiased circles without
+  floating point math nor square root"](https://github.com/Versa-Design/Antialiased_Circle),
+  Versa Design S.L., 2023.
+  <a href="https://cdn.jsdelivr.net/gh/shanecelis/bresenham-rs@feat/add-circle-and-more/doc/papers/vadillo-2023-antialiased-circle.pdf" target="_blank" rel="noopener noreferrer">PDF</a> `CircleAa` + `Fill`
 
 ## License
 

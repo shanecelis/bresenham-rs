@@ -1,7 +1,7 @@
 //! Axis-aligned ellipses from Alois Zingl's `plotEllipse` and `plotEllipseRect`.
 
 #[cfg(feature = "fill")]
-use crate::fill::{Fill, Span};
+use crate::fill::{Fill, Plot, Span};
 use crate::Point;
 
 enum EllipsePhase {
@@ -67,13 +67,14 @@ impl Ellipse {
 #[cfg_attr(docsrs, doc(cfg(feature = "fill")))]
 impl Fill for Ellipse {
     #[inline]
-    fn fill(self) -> impl Iterator<Item = Span> {
+    fn fill(self) -> impl Iterator<Item = Plot> {
         EllipseFill {
             e: self,
             pending: None,
             last_y: None,
             tips: false,
         }
+        .map(Plot::Span)
     }
 }
 
@@ -340,7 +341,7 @@ impl EllipseRect {
 #[cfg_attr(docsrs, doc(cfg(feature = "fill")))]
 impl Fill for EllipseRect {
     #[inline]
-    fn fill(self) -> impl Iterator<Item = Span> {
+    fn fill(self) -> impl Iterator<Item = Plot> {
         EllipseRectFill {
             e: self,
             pending: [Span { x0: 0, x1: 0, y: 0 }; 2],
@@ -350,6 +351,7 @@ impl Fill for EllipseRect {
             open1: None,
             finished: false,
         }
+        .map(Plot::Span)
     }
 }
 
@@ -627,6 +629,16 @@ mod tests {
     }
 
     #[cfg(feature = "fill")]
+    fn spans(it: impl Iterator<Item = crate::fill::Plot>) -> Vec<crate::fill::Span> {
+        use crate::fill::Plot;
+        it.map(|p| match p {
+            Plot::Span(h) => h,
+            Plot::Point(q) => panic!("aliased fill yielded point {q:?}"),
+        })
+        .collect()
+    }
+
+    #[cfg(feature = "fill")]
     fn expand(spans: &[crate::fill::Span]) -> Vec<Point> {
         let mut v = Vec::new();
         for h in spans {
@@ -659,7 +671,7 @@ mod tests {
     fn test_ellipse_fill() {
         use crate::fill::{Fill, Span};
 
-        let res: Vec<_> = Ellipse::new((0, 0), 0, 0).fill().collect();
+        let res = spans(Ellipse::new((0, 0), 0, 0).fill());
         assert_eq!(res, [Span { x0: 0, x1: 0, y: 0 }]);
 
         for &(c, a, b) in &[
@@ -670,7 +682,7 @@ mod tests {
             ((1, 1), 0, 5),
             ((1, 1), 5, 0),
         ] {
-            let spans: Vec<_> = Ellipse::new(c, a, b).fill().collect();
+            let spans = spans(Ellipse::new(c, a, b).fill());
             let outline: Vec<_> = Ellipse::new(c, a, b).collect();
             assert_fill_ok(&spans, &outline, "ellipse");
         }
@@ -681,7 +693,7 @@ mod tests {
     fn test_ellipse_rect_fill() {
         use crate::fill::{Fill, Span};
 
-        let res: Vec<_> = EllipseRect::new((0, 0), (0, 0)).fill().collect();
+        let res = spans(EllipseRect::new((0, 0), (0, 0)).fill());
         assert_eq!(res, [Span { x0: 0, x1: 0, y: 0 }]);
 
         for &(p0, p1) in &[
@@ -691,7 +703,7 @@ mod tests {
             ((10, 1), (1, 8)),
             ((5, 5), (5, 12)),
         ] {
-            let spans: Vec<_> = EllipseRect::new(p0, p1).fill().collect();
+            let spans = spans(EllipseRect::new(p0, p1).fill());
             let outline: Vec<_> = EllipseRect::new(p0, p1).collect();
             assert_fill_ok(&spans, &outline, "ellipse_rect");
         }

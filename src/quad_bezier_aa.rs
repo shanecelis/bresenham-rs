@@ -1,8 +1,9 @@
-//! Anti-aliased quadratic Bézier from Alois Zingl's `plotQuadBezierSegAA`.
+//! Anti-aliased quadratic Bézier from Alois Zingl's `plotQuadBezierAA`.
 //!
 //! Coverage is inverted from Zingl's `setPixelAA`: `255` is fully on the curve,
 //! `0` is fully off.
 
+use crate::bezier::segments;
 use crate::{LineAa, Point, PointAa};
 
 fn coverage_f(zingl_fade: f64) -> u8 {
@@ -21,14 +22,10 @@ enum BezierAaState {
     Done,
 }
 
-/// Anti-aliased quadratic Bézier
+/// One anti-aliased quadratic Bézier segment (gradient sign does not change).
 ///
-/// Like the C original, the gradient sign must not change along the segment;
-/// if it does, the remainder is finished with an anti-aliased line.
-///
-/// Inclusive: `[p0, p2]`
 /// Source: Zingl `plotQuadBezierSegAA`
-pub struct QuadBezierAa {
+struct QuadBezierAaSeg {
     x0: isize,
     y0: isize,
     x2: isize,
@@ -47,9 +44,8 @@ pub struct QuadBezierAa {
     pending_i: u8,
 }
 
-impl QuadBezierAa {
-    /// Inclusive quadratic Bézier (`[p0, p2]`) with control point `p1`.
-    pub fn new(p0: Point, p1: Point, p2: Point) -> Self {
+impl QuadBezierAaSeg {
+    fn new(p0: Point, p1: Point, p2: Point) -> Self {
         let (mut x0, mut y0) = p0;
         let (x1, y1) = p1;
         let (mut x2, mut y2) = p2;
@@ -88,7 +84,7 @@ impl QuadBezierAa {
             xx += xx;
             yy += yy;
             let err = dx + dy + xy as f64;
-            return QuadBezierAa {
+            return QuadBezierAaSeg {
                 x0,
                 y0,
                 x2,
@@ -108,7 +104,7 @@ impl QuadBezierAa {
             };
         }
 
-        QuadBezierAa {
+        QuadBezierAaSeg {
             x0,
             y0,
             x2,
@@ -190,7 +186,7 @@ impl QuadBezierAa {
     }
 }
 
-impl Iterator for QuadBezierAa {
+impl Iterator for QuadBezierAaSeg {
     type Item = PointAa;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -209,6 +205,50 @@ impl Iterator for QuadBezierAa {
                 BezierAaState::Curve => self.step_curve(),
             }
         }
+    }
+}
+
+/// Anti-aliased quadratic Bézier
+///
+/// Any control-point configuration is accepted; the curve is split at gradient
+/// sign changes the same way as [`QuadBezier`](crate::QuadBezier).
+///
+/// Inclusive: `[p0, p2]`
+/// Source: Zingl `plotQuadBezierAA`
+pub struct QuadBezierAa {
+    segs: [QuadBezierAaSeg; 3],
+    n: u8,
+    i: u8,
+}
+
+impl QuadBezierAa {
+    /// Inclusive anti-aliased quadratic Bézier (`[p0, p2]`) with control
+    /// point `p1`.
+    pub fn new(p0: Point, p1: Point, p2: Point) -> Self {
+        let (specs, n) = segments(p0.0, p0.1, p1.0, p1.1, p2.0, p2.1);
+        QuadBezierAa {
+            segs: [
+                QuadBezierAaSeg::new(specs[0].0, specs[0].1, specs[0].2),
+                QuadBezierAaSeg::new(specs[1].0, specs[1].1, specs[1].2),
+                QuadBezierAaSeg::new(specs[2].0, specs[2].1, specs[2].2),
+            ],
+            n: n as u8,
+            i: 0,
+        }
+    }
+}
+
+impl Iterator for QuadBezierAa {
+    type Item = PointAa;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.i < self.n {
+            match self.segs[self.i as usize].next() {
+                Some(p) => return Some(p),
+                None => self.i += 1,
+            }
+        }
+        None
     }
 }
 
@@ -244,11 +284,9 @@ mod tests {
         );
     }
 
-    /// `QuadBezier` follows the true arc. `QuadBezierAa` is a single-segment
-    /// walker that switches to a straight `LineAa` as soon as it hits the
-    /// axis-aligned box of the current endpoints (`x == x2` or `y == y2`).
-    /// When those endpoints share an axis — the usual “arch” — that happens
-    /// on the first pixel, so the bulge is never drawn.
+    /// An arch whose endpoints share an axis must still follow `QuadBezier`.
+    /// `QuadBezierAa` splits at the same gradient-sign changes so the bulge
+    /// is drawn instead of collapsing to the chord.
     #[test]
     fn test_quad_bezier_aa_follows_aliased_arch() {
         let p0 = (0, 20);

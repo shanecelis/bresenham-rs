@@ -232,7 +232,7 @@ fn iround(v: f64) -> isize {
     libm::floor(v + 0.5) as isize
 }
 
-fn segments(
+pub(crate) fn segments(
     mut x0: isize,
     mut y0: isize,
     mut x1: isize,

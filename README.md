@@ -39,11 +39,11 @@ available as optional Cargo features.
 | Demo | Shape               | Type              | Author    | Feature          |
 |------|---------------------|-------------------|-----------|------------------|
 | 0    | Line                | `Line`            | Bresenham | `line` (default) |
-| 1    | Anti-aliased line   | `LineAa`          | Pitteway  | `aa`             |
+| 1    | Anti-aliased line   | `LineAa`          | Pitteway  | `line`, `aa`     |
 | 2    | Circle              | `Circle`          | Bresenham | `circle`         |
 | 3    | Ellipse             | `EllipseRect`     | Pitteway  | `ellipse`        |
 | 4    | Quadratic Bézier    | `QuadBezier`      | Zingl     | `bezier`         |
-| 5    | Anti-aliased Bézier | `QuadBezierAa`    | Zingl     | `aa`             |
+| 5    | Anti-aliased Bézier | `QuadBezierAa`    | Zingl     | `bezier`, `aa`   |
 | 6    | Wide line           | `WideLineAa`      | Murphy    | `wide-line`      |
 | 7    | Filled circle       | `Circle` + `Fill` | Bresenham | `circle`, `fill` |
 | 8    | 3D Line             | `Line3d`          | Kaufman   | `line3d`         |

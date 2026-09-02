@@ -5,8 +5,6 @@
 #[cfg(test)]
 extern crate std;
 
-#[cfg(feature = "aa")]
-mod aa;
 #[cfg(feature = "bezier")]
 mod bezier;
 #[cfg(feature = "circle")]
@@ -21,14 +19,21 @@ mod fill;
 mod inclusive;
 #[cfg(feature = "line")]
 mod line;
+#[cfg(all(feature = "aa", feature = "line"))]
+mod line_aa;
 #[cfg(feature = "line3d")]
 mod line3d;
+#[cfg(all(feature = "aa", feature = "bezier"))]
+mod quad_bezier_aa;
 #[cfg(feature = "wide-line")]
 mod wide_line;
 
-#[cfg(feature = "aa")]
-#[cfg_attr(docsrs, doc(cfg(feature = "aa")))]
-pub use aa::{LineAa, QuadBezierAa};
+#[cfg(all(feature = "aa", feature = "line"))]
+#[cfg_attr(docsrs, doc(cfg(all(feature = "aa", feature = "line"))))]
+pub use line_aa::LineAa;
+#[cfg(all(feature = "aa", feature = "bezier"))]
+#[cfg_attr(docsrs, doc(cfg(all(feature = "aa", feature = "bezier"))))]
+pub use quad_bezier_aa::QuadBezierAa;
 #[cfg(feature = "circle-aa")]
 #[cfg_attr(docsrs, doc(cfg(feature = "circle-aa")))]
 pub use circle_aa::CircleAa;
@@ -63,10 +68,18 @@ pub type Point = (isize, isize);
 /// A point plus its anti-alias coverage
 ///
 /// `255` is fully on; `0` is fully off.
-#[cfg(any(feature = "aa", feature = "circle-aa", feature = "wide-line"))]
+#[cfg(any(
+    all(feature = "aa", feature = "line"),
+    feature = "circle-aa",
+    feature = "wide-line"
+))]
 #[cfg_attr(
     docsrs,
-    doc(cfg(any(feature = "aa", feature = "circle-aa", feature = "wide-line")))
+    doc(cfg(any(
+        all(feature = "aa", feature = "line"),
+        feature = "circle-aa",
+        feature = "wide-line"
+    )))
 )]
 pub type PointAa = (Point, u8);
 

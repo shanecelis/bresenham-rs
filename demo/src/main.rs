@@ -75,6 +75,7 @@ impl Demo {
     fn begin_auto(&mut self) -> Result<(), JsValue> {
         self.drag = Drag::None;
         self.awaiting_control = false;
+        self.scene.sync_auto_state();
         self.scene.load_shape();
         self.mode = Mode::Auto { step: 0, hold: 0 };
         self.scene.clear();
@@ -158,9 +159,13 @@ impl Demo {
         }
         self.mode = Mode::Click { idle: 0 };
         let p = self.grid_xy(event);
-        if self.scene.kind.is_bezier()
-            && (self.awaiting_control || self.scene.near_control(p))
-        {
+        if let Some(control) = Scene::control_at(p) {
+            self.drag = Drag::None;
+            self.awaiting_control = false;
+            self.scene.activate_control(control);
+            return self.paint_shape();
+        }
+        if self.scene.kind.is_bezier() && (self.awaiting_control || self.scene.near_control(p)) {
             self.drag = Drag::Control;
             self.awaiting_control = false;
             self.scene.control = p;

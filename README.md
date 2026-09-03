@@ -36,26 +36,25 @@ Bresenham published algorithms for lines and circles. And a number of other
 shapes were generalized from his work (see references below), which are
 available as optional Cargo features.
 
-| Demo | Shape               | Type              | Author    | Feature          |
-|------|---------------------|-------------------|-----------|------------------|
-| 0    | Line                | `Line`            | Bresenham | `line` (default) |
-| 1    | Anti-aliased line   | `LineAa`          | Pitteway  | `line`, `aa`     |
-| 2    | Circle              | `Circle`          | Bresenham | `circle`         |
-| 3    | Anti-aliased circle | `CircleAa`        | Fu        | `circle-aa`      |
-| 4    | Ellipse             | `EllipseRect`     | Pitteway  | `ellipse`        |
-| 5    | Quadratic Bézier    | `QuadBezier`      | Zingl     | `bezier`         |
-| 6    | Anti-aliased Bézier | `QuadBezierAa`    | Zingl     | `bezier`, `aa`   |
-| 7    | Wide line           | `WideLineAa`      | Murphy    | `wide-line`      |
-| 8    | Filled circle       | `Circle` + `Fill` | Bresenham | `circle`, `fill` |
-| 9    | Filled AA circle    | `CircleAa` + `Fill` | Vadillo | `circle-aa`, `fill` |
-| 10   | 3D Line             | `Line3d`          | Kaufman   | `line3d`         |
-| 11   | Ellipse             | `Ellipse`         | Pitteway  | `ellipse`        |
+| Demo | Shape            | Type                         | Author             | Feature                       |
+|------|------------------|------------------------------|--------------------|-------------------------------|
+| 0    | Line             | `Line`, `LineAa`             | Bresenham, Pitteway | `line`, `aa`                  |
+| 1    | Circle           | `Circle`, `CircleAa`, `Fill` | Bresenham, Fu       | `circle`, `circle-aa`, `fill` |
+| 2    | Ellipse          | `EllipseRect`, `Fill`        | Pitteway           | `ellipse`, `fill`             |
+| 3    | Quadratic Bézier | `QuadBezier`, `QuadBezierAa` | Zingl              | `bezier`, `aa`                |
+| 4    | Wide line        | `WideLineAa`                 | Murphy             | `wide-line`                   |
+| —    | 3D Line          | `Line3d`                     | Kaufman            | `line3d`                      |
+| —    | Ellipse          | `Ellipse`                    | Pitteway           | `ellipse`                     |
 
 
 ## Demo
 
-The WASM demo shows a 64×48 canvas that autoplays the 0-9 shapes above. `Line3d`
-and center-and-radii `Ellipse` are not shown in the demo.
+The WASM demo shows a 64×48 canvas that autoplays every applicable combination
+of the five numbered shapes above. Three controls run along the top: click the
+number to advance the shape, the small circle to toggle anti-aliasing, or the
+outline/filled circle to toggle filling. An inapplicable control is grey and
+its setting is retained for the next applicable shape. `Line3d` and the
+center-and-radii `Ellipse` are not shown in the demo.
 
 ```sh
 cd demo

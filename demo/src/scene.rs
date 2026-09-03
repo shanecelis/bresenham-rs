@@ -2,7 +2,7 @@
 
 use bresenham::{
     Circle, CircleAa, EllipseRect, Fill, Line, LineAa, Plot, Point, QuadBezier, QuadBezierAa,
-    WideLineAa,
+    WideLineAa, Inclusive,
 };
 
 pub const WIDTH: u32 = 64;
@@ -24,55 +24,69 @@ const DIGITS: [u16; 10] = [
     0b111_101_111_001_111,
 ];
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Kind {
     Line,
-    LineAa,
     Circle,
-    CircleAa,
-    EllipseRect,
+    Ellipse,
     QuadBezier,
-    QuadBezierAa,
-    WideLineAa,
-    FillCircle,
-    FillCircleAa,
+    WideLine,
 }
 
 impl Kind {
     pub fn index(self) -> usize {
         match self {
             Kind::Line => 0,
-            Kind::LineAa => 1,
-            Kind::Circle => 2,
-            Kind::CircleAa => 3,
-            Kind::EllipseRect => 4,
-            Kind::QuadBezier => 5,
-            Kind::QuadBezierAa => 6,
-            Kind::WideLineAa => 7,
-            Kind::FillCircle => 8,
-            Kind::FillCircleAa => 9,
+            Kind::Circle => 1,
+            Kind::Ellipse => 2,
+            Kind::QuadBezier => 3,
+            Kind::WideLine => 4,
         }
     }
 
     pub fn next(self) -> Self {
         match self {
-            Kind::Line => Kind::LineAa,
-            Kind::LineAa => Kind::Circle,
-            Kind::Circle => Kind::CircleAa,
-            Kind::CircleAa => Kind::EllipseRect,
-            Kind::EllipseRect => Kind::QuadBezier,
-            Kind::QuadBezier => Kind::QuadBezierAa,
-            Kind::QuadBezierAa => Kind::WideLineAa,
-            Kind::WideLineAa => Kind::FillCircle,
-            Kind::FillCircle => Kind::FillCircleAa,
-            Kind::FillCircleAa => Kind::Line,
+            Kind::Line => Kind::Circle,
+            Kind::Circle => Kind::Ellipse,
+            Kind::Ellipse => Kind::QuadBezier,
+            Kind::QuadBezier => Kind::WideLine,
+            Kind::WideLine => Kind::Line,
         }
     }
 
     pub fn is_bezier(self) -> bool {
-        matches!(self, Kind::QuadBezier | Kind::QuadBezierAa)
+        self == Kind::QuadBezier
+    }
+
+    pub fn supports_aa(self) -> bool {
+        matches!(self, Kind::Line | Kind::Circle | Kind::QuadBezier)
+    }
+
+    pub fn supports_fill(self) -> bool {
+        matches!(self, Kind::Circle | Kind::Ellipse)
     }
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Control {
+    Shape,
+    AntiAlias,
+    Fill,
+}
+
+const AUTO_STATES: [(Kind, bool, bool); 11] = [
+    (Kind::Line, false, false),
+    (Kind::Line, true, false),
+    (Kind::Circle, false, false),
+    (Kind::Circle, true, false),
+    (Kind::Circle, false, true),
+    (Kind::Circle, true, true),
+    (Kind::Ellipse, false, false),
+    (Kind::Ellipse, false, true),
+    (Kind::QuadBezier, false, false),
+    (Kind::QuadBezier, true, false),
+    (Kind::WideLine, false, false),
+];
 
 pub struct Scene {
     pub buf: Vec<u8>,
@@ -80,8 +94,11 @@ pub struct Scene {
     pub end: Point,
     pub control: Point,
     pub kind: Kind,
+    pub anti_alias: bool,
+    pub fill: bool,
     pub pixels: Vec<(Point, u8)>,
     pub tour: u32,
+    auto_state: usize,
 }
 
 impl Scene {
@@ -92,8 +109,11 @@ impl Scene {
             end: (59, 39),
             control: (0, 0),
             kind: Kind::Line,
+            anti_alias: false,
+            fill: false,
             pixels: Vec::new(),
             tour: 0,
+            auto_state: 0,
         };
         scene.load_shape();
         scene.clear();
@@ -108,17 +128,12 @@ impl Scene {
                 ((8, 38), (58, 12)),
                 ((12, 24), (56, 24)),
             ][i],
-            Kind::LineAa => [
-                ((8, 36), (58, 14)),
-                ((10, 12), (54, 40)),
-                ((12, 32), (56, 16)),
-            ][i],
-            Kind::Circle | Kind::CircleAa => [
+            Kind::Circle => [
                 ((32, 26), (46, 26)),
                 ((28, 28), (40, 28)),
                 ((36, 24), (48, 24)),
             ][i],
-            Kind::EllipseRect => [
+            Kind::Ellipse => [
                 ((14, 12), (54, 40)),
                 ((18, 16), (50, 36)),
                 ((10, 20), (58, 32)),
@@ -128,20 +143,10 @@ impl Scene {
                 ((10, 12), (54, 40)),
                 ((8, 40), (58, 14)),
             ][i],
-            Kind::QuadBezierAa => [
-                ((8, 14), (58, 14)),
-                ((10, 40), (54, 12)),
-                ((8, 38), (58, 20)),
-            ][i],
-            Kind::WideLineAa => [
+            Kind::WideLine => [
                 ((10, 16), (54, 36)),
                 ((10, 36), (54, 14)),
                 ((12, 22), (56, 28)),
-            ][i],
-            Kind::FillCircle | Kind::FillCircleAa => [
-                ((32, 26), (42, 26)),
-                ((28, 28), (37, 28)),
-                ((36, 24), (45, 24)),
             ][i],
         }
     }
@@ -158,31 +163,37 @@ impl Scene {
         let start = self.start;
         let end = self.end;
         match self.kind {
+            Kind::Line if self.anti_alias => {
+                LineAa::new(start, end).filter(|(_, c)| *c > 0).collect()
+            }
             Kind::Line => Line::new(start, end).map(|p| (p, 255)).collect(),
-            Kind::LineAa => LineAa::new(start, end).filter(|(_, c)| *c > 0).collect(),
-            Kind::Circle => Circle::new(start, Self::radius(start, end))
-                .map(|p| (p, 255))
-                .collect(),
-            Kind::CircleAa => CircleAa::new(start, Self::radius(start, end))
+            Kind::Circle if self.anti_alias && self.fill => {
+                Self::expand_plots(CircleAa::new(start, Self::radius(start, end)).fill())
+            }
+            Kind::Circle if self.anti_alias => CircleAa::new(start, Self::radius(start, end))
                 .filter(|(_, c)| *c > 0)
                 .collect(),
-            Kind::EllipseRect => EllipseRect::new(start, end).map(|p| (p, 255)).collect(),
-            Kind::QuadBezier => QuadBezier::new(start, self.control, end)
-                .map(|p| (p, 255))
-                .collect(),
-            Kind::QuadBezierAa => QuadBezierAa::new(start, self.control, end)
-                .filter(|(_, c)| *c > 0)
-                .collect(),
-            Kind::WideLineAa => WideLineAa::new(start, end, 3.0)
-                .filter(|(_, c)| *c > 0)
-                .collect(),
-            Kind::FillCircle => Circle::new(start, Self::radius(start, end))
+            Kind::Circle if self.fill => Circle::new(start, Self::radius(start, end))
                 .fill()
                 .flat_map(|h| (h.x0..=h.x1).map(move |x| ((x, h.y), 255)))
                 .collect(),
-            Kind::FillCircleAa => {
-                Self::expand_plots(CircleAa::new(start, Self::radius(start, end)).fill())
-            }
+            Kind::Circle => Circle::new(start, Self::radius(start, end))
+                .map(|p| (p, 255))
+                .collect(),
+            Kind::Ellipse if self.fill => EllipseRect::new(start, end)
+                .fill()
+                .flat_map(|h| (h.x0..=h.x1).map(move |x| ((x, h.y), 255)))
+                .collect(),
+            Kind::Ellipse => EllipseRect::new(start, end).map(|p| (p, 255)).collect(),
+            Kind::QuadBezier if self.anti_alias => QuadBezierAa::new(start, self.control, end)
+                .filter(|(_, c)| *c > 0)
+                .collect(),
+            Kind::QuadBezier => QuadBezier::new(start, self.control, end)
+                .map(|p| (p, 255))
+                .collect(),
+            Kind::WideLine => WideLineAa::new(start, end, 3.0)
+                .filter(|(_, c)| *c > 0)
+                .collect(),
         }
     }
 
@@ -247,11 +258,13 @@ impl Scene {
     }
 
     pub fn stamp_digit(&mut self) {
+        // Controls occupy a fixed strip over the top of the drawing.
         for y in 0..7 {
-            for x in 0..5 {
+            for x in 0..24 {
                 self.plot((x, y), BG[0], BG[1], BG[2]);
             }
         }
+
         let bits = DIGITS[self.kind.index()];
         for row in 0..5 {
             for col in 0..3 {
@@ -259,6 +272,40 @@ impl Scene {
                 if (bits >> (14 - bit)) & 1 == 1 {
                     self.plot((1 + col, 1 + row), 255, 255, 255);
                 }
+            }
+        }
+
+        let aa_color = if self.kind.supports_aa() { 255 } else { 0x55 };
+        let a_segments = [((8, 6), (10, 1)), ((10, 1), (13, 6)), ((9, 4), (12, 4))];
+        if self.anti_alias {
+            for (start, end) in a_segments {
+                let points: Vec<_> = LineAa::new(start, end).collect();
+                for (point, alpha) in points {
+                    let color = (u16::from(alpha) * u16::from(aa_color) / 255) as u8;
+                    self.plot(point, color, color, color);
+                }
+            }
+        } else {
+            for (start, end) in a_segments {
+                let points: Vec<_> = Line::new(start, end).inclusive().collect();
+                for point in points {
+                    self.plot(point, aa_color, aa_color, aa_color);
+                }
+            }
+        }
+
+        let fill_color = if self.kind.supports_fill() { 255 } else { 0x55 };
+        if self.fill {
+            let spans: Vec<_> = Circle::new((18, 3), 2).fill().collect();
+            for span in spans {
+                for x in span.x0..=span.x1 {
+                    self.plot((x, span.y), fill_color, fill_color, fill_color);
+                }
+            }
+        } else {
+            let points: Vec<_> = Circle::new((18, 3), 2).collect();
+            for point in points {
+                self.plot(point, fill_color, fill_color, fill_color);
             }
         }
     }
@@ -280,8 +327,51 @@ impl Scene {
         self.kind = next;
     }
 
+    pub fn control_at((x, y): Point) -> Option<Control> {
+        if !(0..7).contains(&y) {
+            return None;
+        }
+        match x {
+            0..=5 => Some(Control::Shape),
+            7..=13 => Some(Control::AntiAlias),
+            15..=22 => Some(Control::Fill),
+            _ => None,
+        }
+    }
+
+    pub fn activate_control(&mut self, control: Control) {
+        match control {
+            Control::Shape => {
+                self.next_kind();
+                if self.kind.is_bezier() {
+                    self.reset_control();
+                }
+            }
+            Control::AntiAlias if self.kind.supports_aa() => {
+                self.anti_alias = !self.anti_alias;
+            }
+            Control::Fill if self.kind.supports_fill() => {
+                self.fill = !self.fill;
+            }
+            Control::AntiAlias | Control::Fill => return,
+        }
+        self.pixels = self.collect_pixels();
+    }
+
+    pub fn sync_auto_state(&mut self) {
+        if let Some(i) = AUTO_STATES.iter().position(|&(kind, aa, fill)| {
+            kind == self.kind && aa == self.anti_alias && fill == self.fill
+        }) {
+            self.auto_state = i;
+        }
+    }
+
     pub fn advance_kind(&mut self) {
-        self.next_kind();
+        self.auto_state = (self.auto_state + 1) % AUTO_STATES.len();
+        if self.auto_state == 0 {
+            self.tour = self.tour.wrapping_add(1);
+        }
+        (self.kind, self.anti_alias, self.fill) = AUTO_STATES[self.auto_state];
         self.load_shape();
         self.clear();
     }
@@ -294,12 +384,13 @@ impl Scene {
     }
 }
 
-/// One autoplay tour (kinds 0–9). Each entry is a unique canvas and a GIF delay
+/// One autoplay tour through every applicable shape/AA/fill combination. Each
+/// entry is a unique canvas and a GIF delay
 /// in hundredths of a second.
 pub fn autoplay_frames() -> Vec<(Vec<u8>, u16)> {
     let mut scene = Scene::new();
     let mut frames = Vec::new();
-    for kind_i in 0..10 {
+    for state_i in 0..AUTO_STATES.len() {
         let mut step = 0usize;
         loop {
             if scene.pixels.is_empty() {
@@ -330,7 +421,7 @@ pub fn autoplay_frames() -> Vec<(Vec<u8>, u16)> {
                 break;
             }
         }
-        if kind_i + 1 < 10 {
+        if state_i + 1 < AUTO_STATES.len() {
             scene.advance_kind();
         }
     }
@@ -386,4 +477,72 @@ pub fn scale_indexed(src: &[u8], scale: u32) -> Vec<u8> {
         }
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Control, Kind, Scene, BG};
+
+    #[test]
+    fn base_shape_capabilities_are_explicit() {
+        assert!(Kind::Line.supports_aa());
+        assert!(Kind::Circle.supports_aa());
+        assert!(Kind::Circle.supports_fill());
+        assert!(Kind::Ellipse.supports_fill());
+        assert!(Kind::QuadBezier.supports_aa());
+        assert!(!Kind::Ellipse.supports_aa());
+        assert!(!Kind::Line.supports_fill());
+        assert!(!Kind::WideLine.supports_aa());
+        assert!(!Kind::WideLine.supports_fill());
+    }
+
+    #[test]
+    fn controls_have_distinct_hit_targets() {
+        assert_eq!(Scene::control_at((2, 3)), Some(Control::Shape));
+        assert_eq!(Scene::control_at((10, 3)), Some(Control::AntiAlias));
+        assert_eq!(Scene::control_at((18, 3)), Some(Control::Fill));
+        assert_eq!(Scene::control_at((30, 3)), None);
+        assert_eq!(Scene::control_at((2, 8)), None);
+    }
+
+    #[test]
+    fn disabled_controls_retain_their_state() {
+        let mut scene = Scene::new();
+        scene.kind = Kind::Circle;
+        scene.activate_control(Control::AntiAlias);
+        scene.activate_control(Control::Fill);
+        assert!(scene.anti_alias && scene.fill);
+
+        scene.activate_control(Control::Shape);
+        assert_eq!(scene.kind, Kind::Ellipse);
+        assert!(scene.anti_alias && scene.fill);
+        scene.activate_control(Control::AntiAlias);
+        assert!(scene.anti_alias, "disabled AA toggle changed state");
+
+        scene.activate_control(Control::Shape);
+        assert_eq!(scene.kind, Kind::QuadBezier);
+        assert!(scene.fill, "fill state was not retained");
+        scene.activate_control(Control::Fill);
+        assert!(scene.fill, "disabled fill toggle changed state");
+    }
+
+    #[test]
+    fn disabled_icons_are_grey() {
+        let mut scene = Scene::new();
+        scene.clear();
+        scene.stamp_digit();
+
+        let pixel = |scene: &Scene, x: usize, y: usize| {
+            let i = (y * super::WIDTH as usize + x) * 4;
+            [
+                scene.buf[i],
+                scene.buf[i + 1],
+                scene.buf[i + 2],
+                scene.buf[i + 3],
+            ]
+        };
+        assert_eq!(pixel(&scene, 10, 1), [255, 255, 255, 255]);
+        assert_eq!(pixel(&scene, 20, 3), [0x55, 0x55, 0x55, 255]);
+        assert_eq!(pixel(&scene, 14, 3), BG);
+    }
 }

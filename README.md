@@ -40,7 +40,7 @@ available as optional Cargo features.
 |------|------------------|------------------------------|--------------------|-------------------------------|
 | 0    | Line             | `Line`, `LineAa`             | Bresenham, Pitteway | `line`, `aa`                  |
 | 1    | Circle           | `Circle`, `CircleAa`, `Fill` | Bresenham, Fu       | `circle`, `circle-aa`, `fill` |
-| 2    | Ellipse          | `EllipseRect`, `Fill`        | Pitteway           | `ellipse`, `fill`             |
+| 2    | Ellipse          | `EllipseRect`, `EllipseAa`, `Fill` | Pitteway, Vadillo-inspired | `ellipse`, `ellipse-aa`, `fill` |
 | 3    | Quadratic Bézier | `QuadBezier`, `QuadBezierAa` | Zingl              | `bezier`, `aa`                |
 | 4    | Wide line        | `WideLineAa`                 | Murphy             | `wide-line`                   |
 | —    | 3D Line          | `Line3d`                     | Kaufman            | `line3d`                      |
@@ -79,11 +79,13 @@ convenient.
 ## Fill
 
 The `fill` Cargo feature adds the `Fill` trait on `Circle`, `CircleAa`,
-`Ellipse`, and `EllipseRect`. The trait is generic on its iterator item and
-defaults to `Span`: one solid inclusive `[x0, x1]` chord per distinct row.
-`CircleAa` implements `Fill<Plot>` and mixes those spans with `Point`s
-carrying anti-aliased rim coverage (Vadillo's integer algorithm). Enable it
-together with `circle`, `circle-aa`, or `ellipse`.
+`Ellipse`, `EllipseAa`, and `EllipseRect`. The trait is generic on its iterator
+item and defaults to `Span`: one solid inclusive `[x0, x1]` chord per distinct
+row. `CircleAa` and `EllipseAa` implement `Fill<Plot>` and mix those spans with
+`Point`s carrying anti-aliased rim coverage. The circle uses Vadillo's integer
+algorithm; the ellipse extends its squared implicit-function band with the
+ellipse's local gradient. Equal ellipse radii produce exactly the `CircleAa`
+result.
 
 ## Inclusive
 
@@ -180,7 +182,7 @@ was rejected.
 - J. R. Vadillo, ["A novel technique to draw antialiased circles without
   floating point math nor square root"](https://github.com/Versa-Design/Antialiased_Circle),
   Versa Design S.L., 2023.
-  <a href="https://cdn.jsdelivr.net/gh/shanecelis/bresenham-rs@feat/add-circle-and-more/doc/papers/vadillo-2023-antialiased-circle.pdf" target="_blank" rel="noopener noreferrer">PDF</a> `CircleAa` + `Fill`
+  <a href="https://cdn.jsdelivr.net/gh/shanecelis/bresenham-rs@feat/add-circle-and-more/doc/papers/vadillo-2023-antialiased-circle.pdf" target="_blank" rel="noopener noreferrer">PDF</a> `CircleAa` + `Fill`, inspiration for `EllipseAa` + `Fill`
 
 ## License
 

@@ -1,8 +1,8 @@
 //! Shared autoplay scene used by the WASM demo and the GIF recorder.
 
 use bresenham::{
-    Circle, CircleAa, EllipseRect, Fill, Line, LineAa, Plot, Point, QuadBezier, QuadBezierAa,
-    WideLineAa, Inclusive,
+    Circle, CircleAa, EllipseAa, EllipseRect, Fill, Inclusive, Line, LineAa, Plot, Point,
+    QuadBezier, QuadBezierAa, WideLineAa,
 };
 
 pub const WIDTH: u32 = 64;
@@ -59,7 +59,10 @@ impl Kind {
     }
 
     pub fn supports_aa(self) -> bool {
-        matches!(self, Kind::Line | Kind::Circle | Kind::QuadBezier)
+        matches!(
+            self,
+            Kind::Line | Kind::Circle | Kind::Ellipse | Kind::QuadBezier
+        )
     }
 
     pub fn supports_fill(self) -> bool {
@@ -74,7 +77,7 @@ pub enum Control {
     Fill,
 }
 
-const AUTO_STATES: [(Kind, bool, bool); 11] = [
+const AUTO_STATES: [(Kind, bool, bool); 13] = [
     (Kind::Line, false, false),
     (Kind::Line, true, false),
     (Kind::Circle, false, false),
@@ -82,7 +85,9 @@ const AUTO_STATES: [(Kind, bool, bool); 11] = [
     (Kind::Circle, false, true),
     (Kind::Circle, true, true),
     (Kind::Ellipse, false, false),
+    (Kind::Ellipse, true, false),
     (Kind::Ellipse, false, true),
+    (Kind::Ellipse, true, true),
     (Kind::QuadBezier, false, false),
     (Kind::QuadBezier, true, false),
     (Kind::WideLine, false, false),
@@ -180,6 +185,16 @@ impl Scene {
             Kind::Circle => Circle::new(start, Self::radius(start, end))
                 .map(|p| (p, 255))
                 .collect(),
+            Kind::Ellipse if self.anti_alias && self.fill => {
+                let (center, a, b) = Self::ellipse_center_radii(start, end);
+                Self::expand_plots(EllipseAa::new(center, a, b).fill())
+            }
+            Kind::Ellipse if self.anti_alias => {
+                let (center, a, b) = Self::ellipse_center_radii(start, end);
+                EllipseAa::new(center, a, b)
+                    .filter(|(_, c)| *c > 0)
+                    .collect()
+            }
             Kind::Ellipse if self.fill => EllipseRect::new(start, end)
                 .fill()
                 .flat_map(|h| (h.x0..=h.x1).map(move |x| ((x, h.y), 255)))
@@ -238,6 +253,16 @@ impl Scene {
 
     pub fn radius(start: Point, end: Point) -> isize {
         (end.0 - start.0).abs().max((end.1 - start.1).abs()).max(1)
+    }
+
+    fn ellipse_center_radii(start: Point, end: Point) -> (Point, isize, isize) {
+        let dx = end.0 - start.0;
+        let dy = end.1 - start.1;
+        (
+            (start.0 + dx / 2, start.1 + dy / 2),
+            dx.abs() / 2,
+            dy.abs() / 2,
+        )
     }
 
     pub fn clear(&mut self) {
@@ -488,9 +513,9 @@ mod tests {
         assert!(Kind::Line.supports_aa());
         assert!(Kind::Circle.supports_aa());
         assert!(Kind::Circle.supports_fill());
+        assert!(Kind::Ellipse.supports_aa());
         assert!(Kind::Ellipse.supports_fill());
         assert!(Kind::QuadBezier.supports_aa());
-        assert!(!Kind::Ellipse.supports_aa());
         assert!(!Kind::Line.supports_fill());
         assert!(!Kind::WideLine.supports_aa());
         assert!(!Kind::WideLine.supports_fill());
@@ -516,14 +541,17 @@ mod tests {
         scene.activate_control(Control::Shape);
         assert_eq!(scene.kind, Kind::Ellipse);
         assert!(scene.anti_alias && scene.fill);
-        scene.activate_control(Control::AntiAlias);
-        assert!(scene.anti_alias, "disabled AA toggle changed state");
 
         scene.activate_control(Control::Shape);
         assert_eq!(scene.kind, Kind::QuadBezier);
         assert!(scene.fill, "fill state was not retained");
         scene.activate_control(Control::Fill);
         assert!(scene.fill, "disabled fill toggle changed state");
+
+        scene.activate_control(Control::Shape);
+        assert_eq!(scene.kind, Kind::WideLine);
+        scene.activate_control(Control::AntiAlias);
+        assert!(scene.anti_alias, "disabled AA toggle changed state");
     }
 
     #[test]

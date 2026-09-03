@@ -12,6 +12,7 @@ bresenham = { path = "..", default-features = false, features = [
     "bezier",
     "aa",
     "circle-aa",
+    "ellipse-aa",
     "wide-line",
     "fill",
     "inclusive",

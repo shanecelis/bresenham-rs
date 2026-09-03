@@ -13,7 +13,8 @@ use crate::{CircleAa, Point, PointAa};
 ///
 /// Equal radii use [`CircleAa`] directly and therefore produce exactly the
 /// same points, ordering, and coverage. Other ellipses are generated row by
-/// row in linear perimeter time using integer square roots.
+/// row in linear perimeter time using integer square roots. Coverage is
+/// calculated once in the first quadrant and reflected across both axes.
 pub struct EllipseAa {
     #[cfg(feature = "fill")]
     center: Point,
@@ -107,7 +108,9 @@ struct EllipseAaOutline {
     boundary: isize,
     x: isize,
     x_end: isize,
-    mirror: bool,
+    pending: [PointAa; 4],
+    pending_len: u8,
+    pending_i: u8,
 }
 
 impl EllipseAaOutline {
@@ -121,11 +124,13 @@ impl EllipseAaOutline {
             a2,
             b2,
             target: a2 * b2,
-            y: -b,
+            y: 0,
             boundary: 0,
             x: 0,
             x_end: 0,
-            mirror: false,
+            pending: [((0, 0), 0); 4],
+            pending_len: 0,
+            pending_i: 0,
         };
         ellipse.enter_row();
         ellipse
@@ -171,7 +176,6 @@ impl EllipseAaOutline {
         let Some(anchor) = anchor else {
             self.x = 1;
             self.x_end = 0;
-            self.mirror = false;
             return;
         };
 
@@ -185,7 +189,30 @@ impl EllipseAaOutline {
         }
         self.x = first;
         self.x_end = last;
-        self.mirror = false;
+    }
+
+    fn prepare_reflections(&mut self) {
+        let x = self.x;
+        let y = self.y;
+        let alpha = self.alpha(x);
+        let candidates = [
+            (self.center.0 + x, self.center.1 + y),
+            (self.center.0 - x, self.center.1 + y),
+            (self.center.0 - x, self.center.1 - y),
+            (self.center.0 + x, self.center.1 - y),
+        ];
+        self.pending_len = 0;
+        self.pending_i = 0;
+        'candidate: for point in candidates {
+            for prior in &self.pending[..self.pending_len as usize] {
+                if prior.0 == point {
+                    continue 'candidate;
+                }
+            }
+            self.pending[self.pending_len as usize] = (point, alpha);
+            self.pending_len += 1;
+        }
+        self.x += 1;
     }
 }
 
@@ -194,19 +221,14 @@ impl Iterator for EllipseAaOutline {
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            if self.x <= self.x_end {
-                let x = if self.mirror { -self.x } else { self.x };
-                let point = (
-                    (self.center.0 + x, self.center.1 + self.y),
-                    self.alpha(self.x),
-                );
-                if self.x == 0 || self.mirror {
-                    self.x += 1;
-                    self.mirror = false;
-                } else {
-                    self.mirror = true;
-                }
+            if self.pending_i < self.pending_len {
+                let point = self.pending[self.pending_i as usize];
+                self.pending_i += 1;
                 return Some(point);
+            }
+            if self.x <= self.x_end {
+                self.prepare_reflections();
+                continue;
             }
             if self.y == self.b {
                 return None;
@@ -229,7 +251,8 @@ impl Fill<Plot> for EllipseAa {
     /// them is interpolated linearly. This is the ellipse counterpart of
     /// Vadillo's squared-distance circle fill and uses integer arithmetic only.
     /// The resulting intensity is a first-order coverage approximation, not an
-    /// exact box-filtered pixel-area integral.
+    /// exact box-filtered pixel-area integral. Non-circular rows calculate one
+    /// quadrant and reflect edge points and spans across both axes.
     fn fill(self) -> impl Iterator<Item = Plot> {
         EllipseAaFill::new(self.center, self.a, self.b)
     }
@@ -258,6 +281,10 @@ struct EllipseAaFill {
     edge: isize,
     dx: isize,
     phase: FillPhase,
+    reflect_rows: bool,
+    pending: [Plot; 4],
+    pending_len: u8,
+    pending_i: u8,
 }
 
 #[cfg(feature = "fill")]
@@ -265,6 +292,7 @@ impl EllipseAaFill {
     fn new(center: Point, a: isize, b: isize) -> Self {
         let a2 = (a as i128) * (a as i128);
         let b2 = (b as i128) * (b as i128);
+        let reflect_rows = a != b && a > 0 && b > 0;
         let mut fill = Self {
             center,
             a,
@@ -272,7 +300,7 @@ impl EllipseAaFill {
             a2,
             b2,
             target: a2 * b2,
-            dy: -b,
+            dy: if reflect_rows { 0 } else { -b },
             solid: -1,
             edge: 0,
             dx: 0,
@@ -281,6 +309,10 @@ impl EllipseAaFill {
             } else {
                 FillPhase::Left
             },
+            reflect_rows,
+            pending: [Plot::Point(((0, 0), 0)); 4],
+            pending_len: 0,
+            pending_i: 0,
         };
         if a > 0 && b > 0 {
             fill.enter_row();
@@ -348,6 +380,78 @@ impl EllipseAaFill {
         self.dx = self.edge;
         self.phase = FillPhase::Left;
     }
+
+    fn push_pending(&mut self, plot: Plot) {
+        if !self.pending[..self.pending_len as usize].contains(&plot) {
+            self.pending[self.pending_len as usize] = plot;
+            self.pending_len += 1;
+        }
+    }
+
+    fn prepare_edge_reflections(&mut self, dx: isize, alpha: u8) {
+        self.pending_len = 0;
+        self.pending_i = 0;
+        for point in [
+            (self.center.0 - dx, self.center.1 + self.dy),
+            (self.center.0 + dx, self.center.1 + self.dy),
+            (self.center.0 - dx, self.center.1 - self.dy),
+            (self.center.0 + dx, self.center.1 - self.dy),
+        ] {
+            self.push_pending(Plot::Point((point, alpha)));
+        }
+    }
+
+    fn prepare_span_reflections(&mut self) {
+        self.pending_len = 0;
+        self.pending_i = 0;
+        for y in [self.center.1 + self.dy, self.center.1 - self.dy] {
+            self.push_pending(Plot::Span(Span {
+                x0: self.center.0 - self.solid,
+                x1: self.center.0 + self.solid,
+                y,
+            }));
+        }
+    }
+
+    fn next_reflected(&mut self) -> Option<Plot> {
+        loop {
+            if self.pending_i < self.pending_len {
+                let plot = self.pending[self.pending_i as usize];
+                self.pending_i += 1;
+                return Some(plot);
+            }
+            match self.phase {
+                FillPhase::Left => {
+                    if self.dx > self.solid {
+                        let dx = self.dx;
+                        self.dx -= 1;
+                        let alpha = self.alpha(dx);
+                        if alpha > 0 {
+                            self.prepare_edge_reflections(dx, alpha);
+                        }
+                    } else {
+                        self.phase = FillPhase::Solid;
+                    }
+                }
+                FillPhase::Solid => {
+                    self.phase = FillPhase::Right;
+                    if self.solid >= 0 {
+                        self.prepare_span_reflections();
+                    }
+                }
+                FillPhase::Right => {
+                    if self.dy == self.b {
+                        self.phase = FillPhase::Done;
+                    } else {
+                        self.dy += 1;
+                        self.enter_row();
+                    }
+                }
+                FillPhase::Done => return None,
+                FillPhase::Degenerate | FillPhase::Center => unreachable!(),
+            }
+        }
+    }
 }
 
 #[cfg(feature = "fill")]
@@ -355,6 +459,9 @@ impl Iterator for EllipseAaFill {
     type Item = Plot;
 
     fn next(&mut self) -> Option<Self::Item> {
+        if self.reflect_rows {
+            return self.next_reflected();
+        }
         loop {
             match self.phase {
                 FillPhase::Degenerate => {

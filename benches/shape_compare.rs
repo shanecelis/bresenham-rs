@@ -73,11 +73,51 @@ fn shape_compare(c: &mut Criterion) {
     }
 }
 
+fn ellipse_reflection(c: &mut Criterion) {
+    let mut group = c.benchmark_group("ellipse_reflection");
+    for (a, b) in [(8isize, 4isize), (32, 16), (128, 64)] {
+        let dimensions = format!("{a}x{b}");
+        group.bench_with_input(
+            BenchmarkId::new("outline", &dimensions),
+            &(a, b),
+            |bencher, &(a, b)| {
+                bencher.iter(|| consume_points(Ellipse::new((0, 0), black_box(a), black_box(b))))
+            },
+        );
+        group.bench_with_input(
+            BenchmarkId::new("fill", &dimensions),
+            &(a, b),
+            |bencher, &(a, b)| {
+                bencher
+                    .iter(|| consume_spans(Ellipse::new((0, 0), black_box(a), black_box(b)).fill()))
+            },
+        );
+        group.bench_with_input(
+            BenchmarkId::new("outline_aa", &dimensions),
+            &(a, b),
+            |bencher, &(a, b)| {
+                bencher
+                    .iter(|| consume_points_aa(EllipseAa::new((0, 0), black_box(a), black_box(b))))
+            },
+        );
+        group.bench_with_input(
+            BenchmarkId::new("fill_aa", &dimensions),
+            &(a, b),
+            |bencher, &(a, b)| {
+                bencher.iter(|| {
+                    consume_plots(EllipseAa::new((0, 0), black_box(a), black_box(b)).fill())
+                })
+            },
+        );
+    }
+    group.finish();
+}
+
 criterion_group! {
     name = benches;
     config = Criterion::default()
         .warm_up_time(Duration::from_millis(500))
         .measurement_time(Duration::from_secs(2));
-    targets = shape_compare
+    targets = shape_compare, ellipse_reflection
 }
 criterion_main!(benches);

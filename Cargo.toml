@@ -6,7 +6,7 @@ license = "MIT"
 edition = "2021"
 readme = "README.md"
 description = "A fast, iterator-based integer-only implementation of Bresenham's line algorithm and more."
-repository = "https://github.com/shanecelis/bresenham-rs"
+repository = "https://github.com/shanecelis/nano9_raster"
 documentation = "https://docs.rs/nano9_raster"
 exclude = ["demo", "graphics", "doc/papers"]
 

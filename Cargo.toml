@@ -60,6 +60,11 @@ name = "line3d"
 harness = false
 required-features = ["inclusive", "line3d"]
 
+[[bench]]
+name = "shape_compare"
+harness = false
+required-features = ["circle", "ellipse-aa", "fill"]
+
 [profile.wasm]
 inherits = "release"
 opt-level = "z"

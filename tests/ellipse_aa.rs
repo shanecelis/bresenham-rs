@@ -2,7 +2,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use bresenham::{EllipseAa, Fill, Plot, Point};
+use nano9_raster::{EllipseAa, Fill, Plot, Point};
 
 fn outline(a: isize, b: isize) -> BTreeMap<Point, u8> {
     let mut pixels = BTreeMap::new();

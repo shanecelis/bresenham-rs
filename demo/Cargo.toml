@@ -1,11 +1,11 @@
 [package]
-name = "bresenham-demo"
+name = "nano9-raster-demo"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [dependencies]
-bresenham = { path = "..", default-features = false, features = [
+nano9_raster = { path = "..", default-features = false, features = [
     "line",
     "circle",
     "ellipse",

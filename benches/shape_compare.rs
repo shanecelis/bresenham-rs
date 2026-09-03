@@ -1,8 +1,8 @@
 use std::hint::black_box;
 use std::time::Duration;
 
-use bresenham::{Circle, CircleAa, Ellipse, EllipseAa, Fill, Plot, Point, PointAa, Span};
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use nano9_raster::{Circle, CircleAa, Ellipse, EllipseAa, Fill, Plot, Point, PointAa, Span};
 
 #[inline]
 fn mix(acc: usize, x: isize, y: isize, alpha: u8) -> usize {

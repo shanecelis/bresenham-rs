@@ -1,6 +1,6 @@
 //! Shared autoplay scene used by the WASM demo and the GIF recorder.
 
-use bresenham::{
+use nano9_raster::{
     Circle, CircleAa, EllipseAa, EllipseRect, Fill, Inclusive, Line, LineAa, Plot, Point,
     QuadBezier, QuadBezierAa, WideLineAa,
 };

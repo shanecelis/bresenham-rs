@@ -1,4 +1,4 @@
-use bresenham::{Inclusive, Line};
+use nano9_raster::{Inclusive, Line};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 fn fold_half_open(start: (isize, isize), end: (isize, isize)) -> u64 {

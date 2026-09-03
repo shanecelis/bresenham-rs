@@ -1,7 +1,7 @@
-//! Pixelated canvas demo for `bresenham`. Autoplay cycles primitives; drag to draw.
+//! Pixelated canvas demo for `nano9_raster`. Autoplay cycles primitives; drag to draw.
 
-use bresenham::Point;
-use bresenham_demo::scene::{self, Scene, HEIGHT, HOLD_FRAMES, WIDTH};
+use nano9_raster::Point;
+use nano9_raster_demo::scene::{self, Scene, HEIGHT, HOLD_FRAMES, WIDTH};
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;

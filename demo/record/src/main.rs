@@ -1,4 +1,4 @@
-use bresenham_demo::scene::{autoplay_frames, palette, HEIGHT, WIDTH};
+use nano9_raster_demo::scene::{autoplay_frames, palette, HEIGHT, WIDTH};
 use gif::{DisposalMethod, Encoder, Frame, Repeat};
 use std::borrow::Cow;
 use std::env;

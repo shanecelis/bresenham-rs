@@ -1,4 +1,4 @@
-# bresenham
+# nano9_raster
 <img align="right" width="256" height="192" alt="demo" src="https://github.com/user-attachments/assets/91c54fe3-9560-49fa-b77e-536f5d6dbffd" />
 
 Iterator-based
@@ -16,7 +16,7 @@ coordinates without knowing anything about drawing methods or surfaces.
 ## Example
 
 ```rust
-for (x, y) in bresenham::Line::new((0, 1), (6, 4)) {
+for (x, y) in nano9_raster::Line::new((0, 1), (6, 4)) {
     println!("({}, {})", x, y);
 }
 ```
@@ -102,9 +102,9 @@ This code will produce the same points as the first example plus `(6, 4)` at the
 end.
 
 ```rust,ignore
-use bresenham::Inclusive;
+use nano9_raster::Inclusive;
 
-for (x, y) in bresenham::Line::new((0, 1), (6, 4)).inclusive() {
+for (x, y) in nano9_raster::Line::new((0, 1), (6, 4)).inclusive() {
     println!("({}, {})", x, y);
 }
 ```
@@ -187,3 +187,12 @@ was rejected.
 ## License
 
 This crate is licensed under the MIT License.
+
+## Acknowledgments
+
+Many thanks to [Marc Brinkmann](https://github.com/mbr) for creating the
+original [`bresenham`](https://github.com/mbr/bresenham-rs) crate, from which
+`nano9_raster` was
+[inspired](https://mastodon.gamedev.place/@shanecelis/117135093640227966) and
+forked after a withdrawn [PR](https://github.com/mbr/bresenham-rs/pull/6) was
+submitted.

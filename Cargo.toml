@@ -1,13 +1,13 @@
 [package]
-name = "bresenham"
+name = "nano9_raster"
 version = "0.2.0"
 authors = ["Marc Brinkmann <git@marcbrinkmann.de>", "Shane Celis <shane.celis@gmail.com>"]
 license = "MIT"
 edition = "2021"
 readme = "README.md"
 description = "A fast, iterator-based integer-only implementation of Bresenham's line algorithm and more."
-repository = "https://github.com/mbr/bresenham-rs"
-documentation = "https://mbr.github.io/bresenham-rs/bresenham"
+repository = "https://github.com/shanecelis/bresenham-rs"
+documentation = "https://docs.rs/nano9_raster"
 exclude = ["demo", "graphics", "doc/papers"]
 
 [workspace]

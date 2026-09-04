@@ -5,6 +5,8 @@
 //! band by using the local gradient magnitude of the ellipse's implicit
 //! equation.
 
+use arraydeque::ArrayDeque;
+
 #[cfg(feature = "fill")]
 use crate::fill::{Fill, Plot, Span};
 use crate::{CircleAa, Point, PointAa};
@@ -108,9 +110,7 @@ struct EllipseAaOutline {
     boundary: isize,
     x: isize,
     x_end: isize,
-    pending: [PointAa; 4],
-    pending_len: u8,
-    pending_i: u8,
+    pending: ArrayDeque<PointAa, 4>,
 }
 
 impl EllipseAaOutline {
@@ -128,9 +128,7 @@ impl EllipseAaOutline {
             boundary: 0,
             x: 0,
             x_end: 0,
-            pending: [((0, 0), 0); 4],
-            pending_len: 0,
-            pending_i: 0,
+            pending: ArrayDeque::new(),
         };
         ellipse.enter_row();
         ellipse
@@ -201,16 +199,15 @@ impl EllipseAaOutline {
             (self.center.0 - x, self.center.1 - y),
             (self.center.0 + x, self.center.1 - y),
         ];
-        self.pending_len = 0;
-        self.pending_i = 0;
         'candidate: for point in candidates {
-            for prior in &self.pending[..self.pending_len as usize] {
+            for prior in self.pending.iter() {
                 if prior.0 == point {
                     continue 'candidate;
                 }
             }
-            self.pending[self.pending_len as usize] = (point, alpha);
-            self.pending_len += 1;
+            self.pending
+                .push_back((point, alpha))
+                .expect("EllipseAa outline pending overflow");
         }
         self.x += 1;
     }
@@ -221,9 +218,7 @@ impl Iterator for EllipseAaOutline {
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            if self.pending_i < self.pending_len {
-                let point = self.pending[self.pending_i as usize];
-                self.pending_i += 1;
+            if let Some(point) = self.pending.pop_front() {
                 return Some(point);
             }
             if self.x <= self.x_end {
@@ -282,9 +277,7 @@ struct EllipseAaFill {
     dx: isize,
     phase: FillPhase,
     reflect_rows: bool,
-    pending: [Plot; 4],
-    pending_len: u8,
-    pending_i: u8,
+    pending: ArrayDeque<Plot, 4>,
 }
 
 #[cfg(feature = "fill")]
@@ -310,9 +303,7 @@ impl EllipseAaFill {
                 FillPhase::Left
             },
             reflect_rows,
-            pending: [Plot::Point(((0, 0), 0)); 4],
-            pending_len: 0,
-            pending_i: 0,
+            pending: ArrayDeque::new(),
         };
         if a > 0 && b > 0 {
             fill.enter_row();
@@ -382,15 +373,14 @@ impl EllipseAaFill {
     }
 
     fn push_pending(&mut self, plot: Plot) {
-        if !self.pending[..self.pending_len as usize].contains(&plot) {
-            self.pending[self.pending_len as usize] = plot;
-            self.pending_len += 1;
+        if !self.pending.iter().any(|pending| *pending == plot) {
+            self.pending
+                .push_back(plot)
+                .expect("EllipseAa fill pending overflow");
         }
     }
 
     fn prepare_edge_reflections(&mut self, dx: isize, alpha: u8) {
-        self.pending_len = 0;
-        self.pending_i = 0;
         for point in [
             (self.center.0 - dx, self.center.1 + self.dy),
             (self.center.0 + dx, self.center.1 + self.dy),
@@ -402,8 +392,6 @@ impl EllipseAaFill {
     }
 
     fn prepare_span_reflections(&mut self) {
-        self.pending_len = 0;
-        self.pending_i = 0;
         for y in [self.center.1 + self.dy, self.center.1 - self.dy] {
             self.push_pending(Plot::Span(Span {
                 x0: self.center.0 - self.solid,
@@ -415,9 +403,7 @@ impl EllipseAaFill {
 
     fn next_reflected(&mut self) -> Option<Plot> {
         loop {
-            if self.pending_i < self.pending_len {
-                let plot = self.pending[self.pending_i as usize];
-                self.pending_i += 1;
+            if let Some(plot) = self.pending.pop_front() {
                 return Some(plot);
             }
             match self.phase {
